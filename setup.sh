@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # ---------------------------------------------------------------------------
 # Actions — add a function here and a matching entry in MENU_ITEMS/MENU_FNS
 # ---------------------------------------------------------------------------
@@ -58,6 +60,118 @@ action_setup_private() {
     ecryptfs-setup-private
 }
 
+action_setup_ssh() {
+    local src_dir="$SCRIPT_DIR/ssh"
+    local private_dir="$HOME/Private"
+    local dot_ssh_store="$HOME/Private/dot-ssh"
+    local dst_dir="$HOME/.ssh"
+
+    # (a) Verify ~/Private is mounted
+    if ! mountpoint -q "$private_dir"; then
+        echo "ERROR: $private_dir is not mounted. Run 'ecryptfs-setup-private' and re-log in first."
+        return 1
+    fi
+
+    # (b) Create ~/Private/dot-ssh if it doesn't exist
+    mkdir -p "$dot_ssh_store"
+
+    # (c) If ~/.ssh is a plain directory and non-empty, move its contents into ~/Private/dot-ssh
+    if [[ -d "$dst_dir" && ! -L "$dst_dir" ]]; then
+        if [[ -n "$(ls -A "$dst_dir")" ]]; then
+            echo "Moving existing $dst_dir contents into $dot_ssh_store..."
+            find "$dst_dir" -maxdepth 1 -mindepth 1 -exec mv -t "$dot_ssh_store/" {} +
+        fi
+        rmdir "$dst_dir"
+    fi
+
+    # (d) Make ~/.ssh a symlink to ~/Private/dot-ssh
+    if [[ -L "$dst_dir" ]]; then
+        local current_target
+        current_target=$(readlink "$dst_dir")
+        if [[ "$current_target" != "$dot_ssh_store" ]]; then
+            echo "Relinking $dst_dir -> $dot_ssh_store (was -> $current_target)..."
+            rm "$dst_dir"
+            ln -s "$dot_ssh_store" "$dst_dir"
+        fi
+    else
+        echo "Creating symlink: $dst_dir -> $dot_ssh_store"
+        ln -s "$dot_ssh_store" "$dst_dir"
+    fi
+
+    # Copy files from ssh/* only if they do not already exist in ~/.ssh
+    local existing=() f basename_f
+    for f in "$src_dir"/*; do
+        [[ -e "$f" ]] || continue
+        basename_f=$(basename "$f")
+        if [[ -e "$dst_dir/$basename_f" ]]; then
+            existing+=("$basename_f")
+        fi
+    done
+
+    if [[ ${#existing[@]} -gt 0 ]]; then
+        echo "WARNING: the following files already exist in $dst_dir — skipping copy:"
+        printf "  %s\n" "${existing[@]}"
+        return 1
+    fi
+
+    echo "Copying ssh/* to $dst_dir..."
+    cp -v "$src_dir"/* "$dst_dir/"
+
+    echo "Decrypting *.gpg files..."
+    local gpg_file decrypted
+    for gpg_file in "$dst_dir"/*.gpg; do
+        [[ -e "$gpg_file" ]] || continue
+        decrypted="${gpg_file%.gpg}"
+        gpg --quiet --decrypt --output "$decrypted" "$gpg_file"
+        rm "$gpg_file"
+        echo "Decrypted: $(basename "$decrypted")"
+    done
+
+    echo "Fixing permissions..."
+    chmod 700 "$dst_dir"
+    for f in "$dst_dir"/*; do
+        [[ -e "$f" ]] || continue
+        case "$f" in
+            *.pub) chmod 644 "$f" ;;
+            *)     chmod 600 "$f" ;;
+        esac
+    done
+
+    echo "Done."
+}
+
+action_pivot_github_origin() {
+    local url
+    if ! url=$(git remote get-url origin 2>/dev/null); then
+        echo "ERROR: No 'origin' remote found in this git repository."
+        return 1
+    fi
+
+    if [[ "$url" == git@github* ]]; then
+        echo "Origin is already using SSH: $url"
+    elif [[ "$url" == https://github.com/* ]]; then
+        local ssh_url
+        ssh_url="${url/https:\/\/github.com\//git@github.com:}"
+        git remote set-url origin "$ssh_url"
+        echo "Converted origin URL:"
+        echo "  Old: $url"
+        echo "  New: $ssh_url"
+    else
+        echo "Origin URL is not a recognized GitHub URL: $url"
+        return 1
+    fi
+
+    echo "Checking SSH key access to GitHub..."
+    # ssh -T exits 1 even on success; capture output so pipefail doesn't interfere
+    local ssh_out
+    ssh_out=$(ssh -T git@github.com 2>&1) || true
+    if grep -q "successfully authenticated" <<<"$ssh_out"; then
+        echo "SSH key access confirmed."
+    else
+        echo "WARNING: Could not authenticate with GitHub via SSH. Check that your key is loaded (ssh-add -l) and added to your GitHub account."
+    fi
+}
+
 action_install_chrome() {
     echo "Adding Google Chrome repository..."
     curl -fsSL https://dl.google.com/linux/linux_signing_key.pub \
@@ -82,6 +196,8 @@ MENU_ITEMS=(
     "Setup home partition (fstab + btrfs-progs)"
     "Install Claude Code"
     "Setup private directory (ecryptfs-setup-private)"
+    "Setup SSH keys (copy, decrypt, fix permissions)"
+    "Pivot GitHub origin URL to SSH (git@github.com)"
     "Install Google Chrome"
     "Install Cinnamon desktop"
 )
@@ -90,6 +206,8 @@ MENU_FNS=(
     "action_setup_home"
     "action_install_claude"
     "action_setup_private"
+    "action_setup_ssh"
+    "action_pivot_github_origin"
     "action_install_chrome"
     "action_install_cinnamon"
 )

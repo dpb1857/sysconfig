@@ -11,7 +11,8 @@
       "Bash(sgdisk -p /dev/nvme0n1)",
       "Read(//proc/**)",
       "Read(//dev/disk/by-label/**)",
-      "Read(//dev/disk/by-partlabel/**)"
+      "Read(//dev/disk/by-partlabel/**)",
+      "Read(//home/dpb/.claude/**)"
     ]
   }
 }
