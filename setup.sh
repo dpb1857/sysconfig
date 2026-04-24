@@ -99,32 +99,34 @@ action_setup_ssh() {
     fi
 
     # Copy files from ssh/* only if they do not already exist in ~/.ssh
-    local existing=() f basename_f
+    local f basename_f
     for f in "$src_dir"/*; do
         [[ -e "$f" ]] || continue
         basename_f=$(basename "$f")
         if [[ -e "$dst_dir/$basename_f" ]]; then
-            existing+=("$basename_f")
+            echo "Skipping (already exists): $basename_f"
+        else
+            echo "Copying: $basename_f"
+            cp -v "$f" "$dst_dir/"
         fi
     done
-
-    if [[ ${#existing[@]} -gt 0 ]]; then
-        echo "WARNING: the following files already exist in $dst_dir — skipping copy:"
-        printf "  %s\n" "${existing[@]}"
-        return 1
-    fi
-
-    echo "Copying ssh/* to $dst_dir..."
-    cp -v "$src_dir"/* "$dst_dir/"
 
     echo "Decrypting *.gpg files..."
     local gpg_file decrypted
     for gpg_file in "$dst_dir"/*.gpg; do
         [[ -e "$gpg_file" ]] || continue
         decrypted="${gpg_file%.gpg}"
-        gpg --quiet --decrypt --output "$decrypted" "$gpg_file"
-        rm "$gpg_file"
-        echo "Decrypted: $(basename "$decrypted")"
+        if [[ -e "$decrypted" ]]; then
+            echo "Skipping (already exists): $(basename "$decrypted")"
+            continue
+        fi
+        if gpg --quiet --decrypt --output "$decrypted" "$gpg_file"; then
+            rm "$gpg_file"
+            echo "Decrypted: $(basename "$decrypted")"
+        else
+            rm -f "$decrypted"
+            echo "ERROR: Failed to decrypt $(basename "$gpg_file") — leaving encrypted file in place."
+        fi
     done
 
     echo "Fixing permissions..."
@@ -140,7 +142,34 @@ action_setup_ssh() {
     echo "Done."
 }
 
+action_install_emacs() {
+    local src="$SCRIPT_DIR/dot-files/dot-emacs"
+    local dst="$HOME/.emacs"
+
+    if ! command -v emacs &>/dev/null; then
+        echo "Installing Emacs..."
+        sudo apt install -y emacs
+    else
+        echo "Emacs is already installed."
+    fi
+
+    if [[ -e "$dst" ]]; then
+        echo "Skipping (already exists): $dst"
+    else
+        cp -v "$src" "$dst"
+        echo "Done."
+    fi
+}
+
 action_pivot_github_origin() {
+    local gitconfig_src="$SCRIPT_DIR/dot-files/dot-gitconfig"
+    local gitconfig_dst="$HOME/.gitconfig"
+    if [[ -e "$gitconfig_dst" ]]; then
+        echo "Skipping (already exists): $gitconfig_dst"
+    else
+        cp -v "$gitconfig_src" "$gitconfig_dst"
+    fi
+
     local url
     if ! url=$(git remote get-url origin 2>/dev/null); then
         echo "ERROR: No 'origin' remote found in this git repository."
@@ -149,9 +178,9 @@ action_pivot_github_origin() {
 
     if [[ "$url" == git@github* ]]; then
         echo "Origin is already using SSH: $url"
-    elif [[ "$url" == https://github.com/* ]]; then
+    elif [[ "$url" == https://github.com/* || "$url" == http://github.com/* ]]; then
         local ssh_url
-        ssh_url="${url/https:\/\/github.com\//git@github.com:}"
+        ssh_url=$(sed 's|https\?://github\.com/|git@github.com:|' <<<"$url")
         git remote set-url origin "$ssh_url"
         echo "Converted origin URL:"
         echo "  Old: $url"
@@ -197,6 +226,7 @@ MENU_ITEMS=(
     "Install Claude Code"
     "Setup private directory (ecryptfs-setup-private)"
     "Setup SSH keys (copy, decrypt, fix permissions)"
+    "Install Emacs (copy dot-emacs)"
     "Pivot GitHub origin URL to SSH (git@github.com)"
     "Install Google Chrome"
     "Install Cinnamon desktop"
@@ -207,6 +237,7 @@ MENU_FNS=(
     "action_install_claude"
     "action_setup_private"
     "action_setup_ssh"
+    "action_install_emacs"
     "action_pivot_github_origin"
     "action_install_chrome"
     "action_install_cinnamon"
