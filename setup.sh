@@ -43,12 +43,12 @@ action_setup_home() {
 }
 
 action_install_claude() {
-    if ! command -v npm &>/dev/null; then
-        echo "Installing npm..."
-        sudo apt install -y npm
+    if ! command -v curl &>/dev/null; then
+        echo "Installing curl..."
+        sudo apt install -y curl
     fi
     echo "Installing Claude Code..."
-    npm install -g @anthropic-ai/claude-code
+    curl -fsSL https://claude.ai/install.sh | bash
 }
 
 action_customize_ui() {

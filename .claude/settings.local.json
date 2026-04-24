@@ -12,7 +12,16 @@
       "Read(//proc/**)",
       "Read(//dev/disk/by-label/**)",
       "Read(//dev/disk/by-partlabel/**)",
-      "Read(//home/dpb/.claude/**)"
+      "Read(//home/dpb/.claude/**)",
+      "WebFetch(domain:docs.anthropic.com)",
+      "WebFetch(domain:claude.ai)",
+      "Bash(curl -s https://claude.ai/install.sh)",
+      "Bash(curl -s https://api.github.com/repos/anthropics/claude-code/contents/)",
+      "Bash(python3 -c \"import sys,json; data=json.load\\(sys.stdin\\); print\\([f['name'] for f in data]\\)\")",
+      "Bash(curl -s \"https://raw.githubusercontent.com/anthropics/claude-code/main/install.sh\")",
+      "Bash(curl -s \"https://raw.githubusercontent.com/anthropics/claude-code/main/Script/install.sh\")",
+      "Bash(curl -s \"https://api.github.com/repos/anthropics/claude-code/contents/scripts\")",
+      "Bash(curl -s \"https://raw.githubusercontent.com/anthropics/claude-code/main/README.md\")"
     ]
   }
 }
