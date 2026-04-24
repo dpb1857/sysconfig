@@ -51,6 +51,37 @@ action_install_claude() {
     npm install -g @anthropic-ai/claude-code
 }
 
+action_customize_ui() {
+    while true; do
+        echo ""
+        echo "UI Customization"
+        echo ""
+        echo "  1) Map Caps Lock to Left Control"
+        echo ""
+        echo "  b) Back"
+        echo ""
+        read -rp "Select: " choice
+        case "$choice" in
+            1)
+                # /etc/default/keyboard is the reliable persistent path for both X11 and Wayland.
+                # gsettings applies to the live GNOME/Cinnamon session without a logout.
+                local kb_file="/etc/default/keyboard"
+                if grep -q "ctrl:nocaps" "$kb_file" 2>/dev/null; then
+                    echo "Caps Lock already remapped in $kb_file."
+                else
+                    sudo sed -i 's/^XKBOPTIONS=.*/XKBOPTIONS="ctrl:nocaps"/' "$kb_file"
+                    sudo dpkg-reconfigure -phigh keyboard-configuration
+                    echo "Updated $kb_file."
+                fi
+                gsettings set org.gnome.desktop.input-sources xkb-options "['ctrl:nocaps']"
+                echo "Caps Lock mapped to Left Control (log out and back in if not effective immediately)."
+                ;;
+            b|B) return 0 ;;
+            *) echo "Invalid selection: $choice" ;;
+        esac
+    done
+}
+
 action_setup_private() {
     if ! dpkg -s ecryptfs-utils &>/dev/null; then
         echo "Installing ecryptfs-utils..."
@@ -224,6 +255,7 @@ action_install_cinnamon() {
 MENU_ITEMS=(
     "Setup home partition (fstab + btrfs-progs)"
     "Install Claude Code"
+    "Customize UI"
     "Setup private directory (ecryptfs-setup-private)"
     "Setup SSH keys (copy, decrypt, fix permissions)"
     "Install Emacs (copy dot-emacs)"
@@ -235,6 +267,7 @@ MENU_ITEMS=(
 MENU_FNS=(
     "action_setup_home"
     "action_install_claude"
+    "action_customize_ui"
     "action_setup_private"
     "action_setup_ssh"
     "action_install_emacs"
