@@ -51,12 +51,119 @@ action_install_claude() {
     curl -fsSL https://claude.ai/install.sh | bash
 }
 
+action_cinnamon_set_terminal_launcher() {
+    local schema="org.cinnamon.desktop.keybindings"
+    local base_path="/org/cinnamon/desktop/keybindings/custom-keybindings"
+
+    local raw_list
+    raw_list=$(gsettings get "$schema" custom-list 2>/dev/null)
+
+    # Find next free slot
+    local slot=0
+    while [[ "$raw_list" == *"custom$slot"* ]]; do
+        slot=$((slot + 1))
+    done
+    local key="custom$slot"
+    local path="$base_path/$key/"
+
+    gsettings set "org.cinnamon.desktop.keybindings.custom-keybinding:$path" name "Launch Terminal"
+    gsettings set "org.cinnamon.desktop.keybindings.custom-keybinding:$path" command "x-terminal-emulator"
+    gsettings set "org.cinnamon.desktop.keybindings.custom-keybinding:$path" binding "['<Super>Return']"
+
+    if [[ "$raw_list" == "@as []" || "$raw_list" == "[]" ]]; then
+        gsettings set "$schema" custom-list "['$key']"
+    else
+        gsettings set "$schema" custom-list "${raw_list%]}, '$key']"
+    fi
+
+    echo "Super+Return bound to x-terminal-emulator (slot $key)."
+}
+
+action_cinnamon_set_browser_launcher() {
+    local schema="org.cinnamon.desktop.keybindings"
+    local base_path="/org/cinnamon/desktop/keybindings/custom-keybindings"
+
+    local raw_list
+    raw_list=$(gsettings get "$schema" custom-list 2>/dev/null)
+
+    # Find next free slot
+    local slot=0
+    while [[ "$raw_list" == *"custom$slot"* ]]; do
+        slot=$((slot + 1))
+    done
+    local key="custom$slot"
+    local path="$base_path/$key/"
+
+    gsettings set "org.cinnamon.desktop.keybindings.custom-keybinding:$path" name "Launch Browser"
+    gsettings set "org.cinnamon.desktop.keybindings.custom-keybinding:$path" command "x-www-browser"
+    gsettings set "org.cinnamon.desktop.keybindings.custom-keybinding:$path" binding "['<Primary><Super>c']"
+
+    if [[ "$raw_list" == "@as []" || "$raw_list" == "[]" ]]; then
+        gsettings set "$schema" custom-list "['$key']"
+    else
+        gsettings set "$schema" custom-list "${raw_list%]}, '$key']"
+    fi
+
+    echo "Ctrl+Super+C bound to x-www-browser (slot $key)."
+}
+
+action_cinnamon_set_emacs_launcher() {
+    local schema="org.cinnamon.desktop.keybindings"
+    local base_path="/org/cinnamon/desktop/keybindings/custom-keybindings"
+
+    local raw_list
+    raw_list=$(gsettings get "$schema" custom-list 2>/dev/null)
+
+    # Find next free slot
+    local slot=0
+    while [[ "$raw_list" == *"custom$slot"* ]]; do
+        slot=$((slot + 1))
+    done
+    local key="custom$slot"
+    local path="$base_path/$key/"
+
+    gsettings set "org.cinnamon.desktop.keybindings.custom-keybinding:$path" name "Launch Emacs"
+    gsettings set "org.cinnamon.desktop.keybindings.custom-keybinding:$path" command 'bash -c "cd $HOME && exec /usr/bin/emacs"'
+    gsettings set "org.cinnamon.desktop.keybindings.custom-keybinding:$path" binding "['<Primary><Super>x']"
+
+    if [[ "$raw_list" == "@as []" || "$raw_list" == "[]" ]]; then
+        gsettings set "$schema" custom-list "['$key']"
+    else
+        gsettings set "$schema" custom-list "${raw_list%]}, '$key']"
+    fi
+
+    echo "Ctrl+Super+X bound to emacs (slot $key)."
+}
+
+action_cinnamon_ui() {
+    while true; do
+        echo ""
+        echo "Cinnamon UI"
+        echo ""
+        echo "  1) Set Super+Return to launch terminal"
+        echo "  2) Set Ctrl+Super+C to launch browser"
+        echo "  3) Set Ctrl+Super+X to launch emacs"
+        echo ""
+        echo "  b) Back"
+        echo ""
+        read -rp "Select: " choice
+        case "$choice" in
+            1) action_cinnamon_set_terminal_launcher ;;
+            2) action_cinnamon_set_browser_launcher ;;
+            3) action_cinnamon_set_emacs_launcher ;;
+            b|B) return 0 ;;
+            *) echo "Invalid selection: $choice" ;;
+        esac
+    done
+}
+
 action_customize_ui() {
     while true; do
         echo ""
         echo "UI Customization"
         echo ""
         echo "  1) Map Caps Lock to Left Control"
+        echo "  2) Cinnamon UI"
         echo ""
         echo "  b) Back"
         echo ""
@@ -76,6 +183,7 @@ action_customize_ui() {
                 gsettings set org.gnome.desktop.input-sources xkb-options "['ctrl:nocaps']"
                 echo "Caps Lock mapped to Left Control (log out and back in if not effective immediately)."
                 ;;
+            2) action_cinnamon_ui ;;
             b|B) return 0 ;;
             *) echo "Invalid selection: $choice" ;;
         esac
