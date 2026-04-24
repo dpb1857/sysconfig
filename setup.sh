@@ -351,6 +351,109 @@ action_install_chrome() {
     sudo apt install -y google-chrome-stable
 }
 
+action_install_system_utils() {
+    echo "Installing system utilities..."
+    sudo apt install -y baobab httpie gparted btop ripgrep
+}
+
+action_install_office() {
+    echo "Installing office software..."
+    sudo apt install -y xournal
+}
+
+action_install_media() {
+    echo "Installing media software..."
+    sudo apt install -y ubuntu-restricted-extras digikam ffmpeg gimp gscan2pdf vlc
+}
+
+action_install_devtools() {
+    echo "Installing dev tools..."
+    sudo apt install -y jq make
+}
+
+action_install_clojure_java() {
+    if ! command -v java &>/dev/null; then
+        echo "Installing Java (required for Clojure)..."
+        sudo apt install -y default-jdk
+    fi
+    if ! command -v rlwrap &>/dev/null; then
+        echo "Installing rlwrap (required for Clojure)..."
+        sudo apt install -y rlwrap
+    fi
+    echo "Downloading Clojure installer..."
+    curl -L -O https://github.com/clojure/brew-install/releases/latest/download/linux-install.sh
+    chmod +x linux-install.sh
+    echo "Installing Clojure..."
+    sudo ./linux-install.sh
+    rm linux-install.sh
+}
+
+action_install_clj_kondo() {
+    echo "Downloading clj-kondo installer..."
+    curl -sLO https://raw.githubusercontent.com/clj-kondo/clj-kondo/master/script/install-clj-kondo
+    chmod +x install-clj-kondo
+    echo "Installing clj-kondo..."
+    sudo ./install-clj-kondo
+    rm install-clj-kondo
+}
+
+action_install_babashka() {
+    echo "Downloading babashka installer..."
+    curl -sLO https://raw.githubusercontent.com/babashka/babashka/master/install
+    chmod +x install
+    echo "Installing babashka..."
+    sudo ./install
+    rm install
+}
+
+action_install_clojure() {
+    while true; do
+        echo ""
+        echo "Clojure"
+        echo ""
+        echo "  1) Java Clojure"
+        echo "  2) clj-kondo"
+        echo "  3) babashka"
+        echo ""
+        echo "  b) Back"
+        echo ""
+        read -rp "Select: " choice
+        case "$choice" in
+            1) action_install_clojure_java ;;
+            2) action_install_clj_kondo ;;
+            3) action_install_babashka ;;
+            b|B) return 0 ;;
+            *) echo "Invalid selection: $choice" ;;
+        esac
+    done
+}
+
+action_install_software() {
+    while true; do
+        echo ""
+        echo "Install Software"
+        echo ""
+        echo "  1) System Utils (baobab, httpie, gparted, btop, ripgrep)"
+        echo "  2) Office (xournal)"
+        echo "  3) Media (ubuntu-restricted-extras, digikam, ffmpeg, gimp, gscan2pdf, vlc)"
+        echo "  4) Devtools (jq, make)"
+        echo "  5) Clojure"
+        echo ""
+        echo "  b) Back"
+        echo ""
+        read -rp "Select: " choice
+        case "$choice" in
+            1) action_install_system_utils ;;
+            2) action_install_office ;;
+            3) action_install_media ;;
+            4) action_install_devtools ;;
+            5) action_install_clojure ;;
+            b|B) return 0 ;;
+            *) echo "Invalid selection: $choice" ;;
+        esac
+    done
+}
+
 # ---------------------------------------------------------------------------
 # Menu registry — display name and corresponding function name, in order
 # ---------------------------------------------------------------------------
@@ -358,23 +461,25 @@ action_install_chrome() {
 MENU_ITEMS=(
     "Setup home partition (fstab + btrfs-progs)"
     "Install Claude Code"
-    "Customize UI"
     "Setup private directory (ecryptfs-setup-private)"
     "Setup SSH keys (copy, decrypt, fix permissions)"
     "Pivot GitHub origin URL to SSH (git@github.com)"
     "Install Emacs (copy dot-emacs)"
     "Install Google Chrome"
+    "Customize UI"
+    "Install Software"
 )
 
 MENU_FNS=(
     "action_setup_home"
     "action_install_claude"
-    "action_customize_ui"
     "action_setup_private"
     "action_setup_ssh"
     "action_pivot_github_origin"
     "action_install_emacs"
     "action_install_chrome"
+    "action_customize_ui"
+    "action_install_software"
 )
 
 # ---------------------------------------------------------------------------
