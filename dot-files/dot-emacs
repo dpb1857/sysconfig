@@ -244,7 +244,8 @@
 ;; bookmark plus;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(require 'dpb-bookmarksplus)
+;; Hacked!!
+;; (require 'dpb-bookmarksplus)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Misc settings
