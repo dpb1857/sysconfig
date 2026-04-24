@@ -243,11 +243,6 @@ action_install_chrome() {
     sudo apt install -y google-chrome-stable
 }
 
-action_install_cinnamon() {
-    echo "Installing Cinnamon desktop..."
-    sudo apt install -y cinnamon-desktop-environment
-}
-
 # ---------------------------------------------------------------------------
 # Menu registry — display name and corresponding function name, in order
 # ---------------------------------------------------------------------------
@@ -258,10 +253,9 @@ MENU_ITEMS=(
     "Customize UI"
     "Setup private directory (ecryptfs-setup-private)"
     "Setup SSH keys (copy, decrypt, fix permissions)"
-    "Install Emacs (copy dot-emacs)"
     "Pivot GitHub origin URL to SSH (git@github.com)"
+    "Install Emacs (copy dot-emacs)"
     "Install Google Chrome"
-    "Install Cinnamon desktop"
 )
 
 MENU_FNS=(
@@ -270,10 +264,9 @@ MENU_FNS=(
     "action_customize_ui"
     "action_setup_private"
     "action_setup_ssh"
-    "action_install_emacs"
     "action_pivot_github_origin"
+    "action_install_emacs"
     "action_install_chrome"
-    "action_install_cinnamon"
 )
 
 # ---------------------------------------------------------------------------
