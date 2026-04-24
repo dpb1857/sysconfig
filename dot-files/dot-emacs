@@ -107,7 +107,7 @@
 
 (setq load-path
       (append (list
-               (concat (getenv "HOME") "/synced/elisp")
+               (concat (getenv "HOME") "/sysconfig/elisp")
                (concat (getenv "HOME") "/elisp")
                "/usr/local/share/emacs/site-lisp"
                ;; (concat (getenv "HOME") "/elisp/git-emacs")
