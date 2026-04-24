@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(chmod +x *)",
+      "Bash(lsblk -o NAME,LABEL,FSTYPE,UUID,MOUNTPOINT)",
+      "Bash(blkid)",
+      "Bash(parted -s /dev/nvme0n1 print)",
+      "Bash(parted -s /dev/sda print)",
+      "Bash(sudo parted *)",
+      "Bash(gdisk -l /dev/nvme0n1)",
+      "Bash(sgdisk -p /dev/nvme0n1)",
+      "Read(//proc/**)",
+      "Read(//dev/disk/by-label/**)",
+      "Read(//dev/disk/by-partlabel/**)"
+    ]
+  }
+}
