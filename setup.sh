@@ -726,6 +726,182 @@ action_install_software() {
     done
 }
 
+action_hibernate_configure_swap() {
+    local swap_uuid
+    swap_uuid=$(sudo blkid -t TYPE=swap -s UUID -o value | head -1)
+    if [[ -z "$swap_uuid" ]]; then
+        echo "ERROR: No swap partition found on this system."
+        return 1
+    fi
+    echo "Found swap partition UUID: $swap_uuid"
+
+    local fstab="/etc/fstab"
+
+    if grep -qF "UUID=$swap_uuid" "$fstab"; then
+        echo "UUID=$swap_uuid already present in $fstab."
+    else
+        echo "Adding swap partition to $fstab..."
+        echo "UUID=$swap_uuid  none  swap  sw  0  0" | sudo tee -a "$fstab" > /dev/null
+        echo "Added."
+    fi
+
+    # Find any file-based swap entry (absolute path, not a UUID= device, type swap)
+    local swapfile_line swapfile_path
+    swapfile_line=$(grep -E '^[[:space:]]*/[^[:space:]]+[[:space:]]' "$fstab" \
+        | grep -v '^[[:space:]]*#' \
+        | awk '$3=="swap" && $1 !~ /^UUID=/' \
+        | head -1 || true)
+    if [[ -n "$swapfile_line" ]]; then
+        swapfile_path=$(echo "$swapfile_line" | awk '{print $1}')
+        echo "Found swapfile entry in fstab: $swapfile_path — removing..."
+        if swapon --show --noheadings | awk '{print $1}' | grep -qF "$swapfile_path"; then
+            echo "Disabling $swapfile_path..."
+            sudo swapoff "$swapfile_path"
+        fi
+        sudo sed -i "\|^[[:space:]]*$swapfile_path[[:space:]]|d" "$fstab"
+        echo "Removed $swapfile_path from $fstab."
+    fi
+
+    echo "Synchronizing active swap with fstab..."
+    sudo swapoff -a 2>/dev/null || true
+    sudo swapon -a
+    echo "Active swap:"
+    swapon --show
+}
+
+action_hibernate_configure_grub() {
+    local swap_uuid
+    swap_uuid=$(sudo blkid -t TYPE=swap -s UUID -o value | head -1)
+    if [[ -z "$swap_uuid" ]]; then
+        echo "ERROR: No swap partition found."
+        return 1
+    fi
+    echo "Swap partition UUID: $swap_uuid"
+
+    local grub_file="/etc/default/grub"
+    local resume_param="resume=UUID=$swap_uuid"
+
+    if grep -qF "$resume_param" "$grub_file"; then
+        echo "GRUB already has $resume_param — nothing to do."
+        return 0
+    fi
+
+    sudo cp "$grub_file" "${grub_file}.bak"
+    echo "Backed up $grub_file to ${grub_file}.bak"
+
+    if grep -q "resume=" "$grub_file"; then
+        sudo sed -i "s|resume=[^[:space:]\"]*|$resume_param|g" "$grub_file"
+        echo "Updated existing resume= to $resume_param."
+    else
+        sudo sed -i "s|^\(GRUB_CMDLINE_LINUX_DEFAULT=\"[^\"]*\)\"|\1 $resume_param\"|" "$grub_file"
+        echo "Added $resume_param to GRUB_CMDLINE_LINUX_DEFAULT."
+    fi
+
+    echo "Running update-grub..."
+    sudo update-grub
+    echo "Done. Reboot required for changes to take effect."
+}
+
+action_hibernate_set_shortcut() {
+    local cmd="sudo systemctl hibernate"
+    local de="${XDG_CURRENT_DESKTOP:-}"
+
+    if [[ "$de" == *"GNOME"* ]]; then
+        local schema="org.gnome.settings-daemon.plugins.media-keys"
+        local base_path="/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings"
+        local raw_list
+        raw_list=$(gsettings get "$schema" custom-keybindings 2>/dev/null)
+        local slot=0
+        while [[ "$raw_list" == *"custom$slot"* ]]; do
+            slot=$((slot + 1))
+        done
+        local key="custom$slot"
+        local path="$base_path/$key/"
+        gsettings set "org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$path" name "Hibernate"
+        gsettings set "org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$path" command "$cmd"
+        gsettings set "org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$path" binding "<Primary><Super>h"
+        if [[ "$raw_list" == "@as []" || "$raw_list" == "[]" ]]; then
+            gsettings set "$schema" custom-keybindings "['$path']"
+        else
+            gsettings set "$schema" custom-keybindings "${raw_list%]}, '$path']"
+        fi
+        echo "Ctrl+Super+H bound to hibernate (GNOME, slot $key)."
+    elif [[ "$de" == *"X-Cinnamon"* || "$de" == *"CINNAMON"* ]]; then
+        local schema="org.cinnamon.desktop.keybindings"
+        local base_path="/org/cinnamon/desktop/keybindings/custom-keybindings"
+        local raw_list
+        raw_list=$(gsettings get "$schema" custom-list 2>/dev/null)
+        local slot=0
+        while [[ "$raw_list" == *"custom$slot"* ]]; do
+            slot=$((slot + 1))
+        done
+        local key="custom$slot"
+        local path="$base_path/$key/"
+        gsettings set "org.cinnamon.desktop.keybindings.custom-keybinding:$path" name "Hibernate"
+        gsettings set "org.cinnamon.desktop.keybindings.custom-keybinding:$path" command "$cmd"
+        gsettings set "org.cinnamon.desktop.keybindings.custom-keybinding:$path" binding "['<Primary><Super>h']"
+        if [[ "$raw_list" == "@as []" || "$raw_list" == "[]" ]]; then
+            gsettings set "$schema" custom-list "['$key']"
+        else
+            gsettings set "$schema" custom-list "${raw_list%]}, '$key']"
+        fi
+        echo "Ctrl+Super+H bound to hibernate (Cinnamon, slot $key)."
+    else
+        echo "ERROR: Unsupported or undetected desktop environment: '${de:-<unset>}'."
+        echo "Supported: GNOME, X-Cinnamon."
+        return 1
+    fi
+}
+
+action_hibernate_add_sudoers() {
+    local sudoers_file="/etc/sudoers.d/dpb-systemctl"
+    local rule="dpb ALL=(ALL) NOPASSWD: /usr/bin/systemctl *"
+
+    if [[ -f "$sudoers_file" ]] && grep -qF "$rule" "$sudoers_file"; then
+        echo "Rule already present in $sudoers_file."
+        return 0
+    fi
+
+    local tmp
+    tmp=$(mktemp)
+    echo "$rule" > "$tmp"
+
+    if ! visudo -c -f "$tmp" &>/dev/null; then
+        echo "ERROR: sudoers syntax check failed."
+        rm -f "$tmp"
+        return 1
+    fi
+
+    sudo install -m 440 -o root -g root "$tmp" "$sudoers_file"
+    rm -f "$tmp"
+    echo "Written: $sudoers_file"
+    echo "  $rule"
+}
+
+action_sleep_hibernation() {
+    while true; do
+        echo ""
+        echo "Sleep & Hibernation"
+        echo ""
+        echo "  1) Configure swap partition in /etc/fstab (remove swapfile)"
+        echo "  2) Configure GRUB resume= parameter"
+        echo "  3) Bind Ctrl+Super+H to hibernate"
+        echo "  4) Add sudoers rule: dpb can run systemctl without password"
+        echo ""
+        echo "  b) Back"
+        echo ""
+        read -rp "Select: " choice
+        case "$choice" in
+            1) action_hibernate_configure_swap ;;
+            2) action_hibernate_configure_grub ;;
+            3) action_hibernate_set_shortcut ;;
+            4) action_hibernate_add_sudoers ;;
+            b|B) return 0 ;;
+            *) echo "Invalid selection: $choice" ;;
+        esac
+    done
+}
+
 # ---------------------------------------------------------------------------
 # Menu registry — display name and corresponding function name, in order
 # ---------------------------------------------------------------------------
@@ -741,6 +917,7 @@ MENU_ITEMS=(
     "Customize UI"
     "Install Software"
     "Dell Printer Support"
+    "Sleep & Hibernation"
 )
 
 MENU_FNS=(
@@ -754,6 +931,7 @@ MENU_FNS=(
     "action_customize_ui"
     "action_install_software"
     "action_dell_printer_support"
+    "action_sleep_hibernation"
 )
 
 # ---------------------------------------------------------------------------
