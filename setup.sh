@@ -117,6 +117,13 @@ action_cinnamon_set_text_scaling() {
     echo "Text scaling factor set to 1.2."
 }
 
+action_cinnamon_set_panel_autohide() {
+    dconf write /org/cinnamon/panels-autohide "['1:true']"
+    dconf write /org/cinnamon/panels-show-delay "['1:500']"
+    dconf write /org/cinnamon/panels-hide-delay "['1:250']"
+    echo "Panel auto-hide enabled (show delay: 500ms, hide delay: 250ms)."
+}
+
 action_cinnamon_ui() {
     while true; do
         echo ""
@@ -128,6 +135,7 @@ action_cinnamon_ui() {
         echo "  4) Bind Ctrl+Super+Z to suspend"
         echo "  5) Bind Ctrl+Super+L to lock screen"
         echo "  6) Set text scaling factor to 1.2"
+        echo "  7) Enable panel auto-hide (show: 500ms, hide: 250ms)"
         echo ""
         echo "  b) Back"
         echo ""
@@ -139,6 +147,7 @@ action_cinnamon_ui() {
             4) action_cinnamon_set_suspend_shortcut ;;
             5) action_cinnamon_set_lock_shortcut ;;
             6) action_cinnamon_set_text_scaling ;;
+            7) action_cinnamon_set_panel_autohide ;;
             b|B) return 0 ;;
             *) echo "Invalid selection: $choice" ;;
         esac
