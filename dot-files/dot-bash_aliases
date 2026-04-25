@@ -1,0 +1,294 @@
+# -*- mode: shell-script; -*-
+
+echo "Sourcing dot-bashrc-dpb... "
+
+export LOADED_DOT_BASHRC_DPB=1
+
+unalias ls 2> /dev/null
+alias ls='ls -F'
+
+alias again='LEFTP=""; RIGHTP=""; source ~/.bashrc'
+
+# https://askubuntu.com/questions/504240/how-to-change-the-caret-of-the-gnome-terminal
+alias cursor="echo -ne '\e[0 q'"
+
+alias d='export d=`pwd` && echo "setting environment variable d to $d"'
+alias dirs='echo $(builtin dirs) [$OLDPWD]'
+alias goto='cd `/bin/pwd`'
+alias pyserve='python -m http.server 8080' # python3 module name
+alias rehash='export PATH=$PATH'
+alias uncd='cd $OLDPWD'
+alias scp='scp -c blowfish-cbc'
+
+ignoreeof=5
+
+if [ "$LOGNAME" = root ]; then
+    LEFTP="{"${LEFTP}
+    RIGHTP=${RIGHTP}"}"
+    key='#'
+else
+    LEFTP="["${LEFTP}
+    RIGHTP=${RIGHTP}"]"
+    key='%'
+fi
+
+PS1="${LEFTP}${LOGNAME}@${HOSTNAME}${RIGHTP} \#${key} "
+
+function dt() {
+    if [ -f /tmp/dir.txt ]; then
+        export d=`cat /tmp/dir.txt`
+        rm -f /tmp/dir.txt
+	echo "Set environment variable d to $d ."
+    else
+	curdir=`/bin/pwd`
+        echo $curdir > /tmp/dir.txt
+	echo "Stored $curdir in /tmp/dir.txt ."
+    fi
+}
+
+function manl () {
+    nroff -man $1 | less
+}
+
+function adddot () {
+    export PATH=".:$PATH"
+}
+
+function addphotos() {
+    if ! echo $PATH | grep synced/bin/photos > /dev/null; then
+        export PATH="$HOME/synced/bin/photos:$PATH"
+    fi
+    echo "photo command notes -"
+    cat $HOME/synced/bin/photos/README.txt
+}
+
+function ediff () {
+    emacs --eval "(ediff \"$1\" \"$2\")"
+}
+
+function rot13() {
+    tr n-za-mN-ZA-M a-zA-Z
+}
+
+function enc() {
+    if [ ! -d $HOME/enc ]; then
+        mkdir $HOME/enc
+    fi
+    sudo mount -t ecryptfs -o key=passphrase $HOME/synced/enc $HOME/enc
+    chmod 700 $HOME/enc
+}
+
+function unenc() {
+    sudo umount $HOME/enc
+    rmdir $HOME/enc
+}
+
+function encdocs() {
+    if [ ! -d $HOME/encdocs ]; then
+        mkdir $HOME/encdocs
+    fi
+    DOCS_DIR="$HOME/Dropbox/Documents/EncDocs"
+    sudo mount -t ecryptfs -o key=passphrase $DOCS_DIR $HOME/encdocs
+    chmod 700 $HOME/encdocs
+}
+
+function unencdocs() {
+    sudo umount $HOME/encdocs
+    rmdir $HOME/encdocs
+}
+
+function encjobs() {
+    if [ ! -d $HOME/jobsenc ]; then
+        mkdir $HOME/jobsenc
+    fi
+    JOBS_DIR="$HOME/Dropbox/Jobs/enc"
+    sudo mount -t ecryptfs -o key=passphrase $JOBS_DIR $HOME/jobsenc
+    chmod 700 $HOME/jobsenc
+}
+
+function unencjobs() {
+    sudo umount $HOME/jobsenc
+    rmdir $HOME/jobsenc
+}
+
+function find_media_dir() {
+    # Sets MEDIA_DIR to the located media directory;
+    MEDIABASE="/media/SanDisk32 /media/`whoami`/SanDisk32"
+    searchdir=$1
+    MEDIA_DIR=""
+    for base in $MEDIABASE; do
+        if [ -d $base/$searchdir ]; then
+            MEDIA_DIR=$base/$searchdir
+            break
+        fi
+    done
+}
+
+function gnucashfs() {
+    if [ ! -d $HOME/gnucash ]; then
+        mkdir $HOME/gnucash;
+    fi;
+    find_media_dir gnucash
+    if [ "$MEDIA_DIR" == "" ]; then
+        echo "Could not locate gnucash directory." 1>&2
+    else
+        sudo mount -t ecryptfs -o key=passphrase $MEDIA_DIR $HOME/gnucash
+    fi
+}
+
+ungnucashfs() {
+    sudo umount $HOME/gnucash;
+    rmdir $HOME/gnucash
+}
+
+function finance() {
+    if [ ! -d $HOME/Dropbox/Finance ]; then
+        echo "Dropbox/Finance not found." 1>&2
+        return 1
+    fi
+    if mount | grep -q $HOME/finance; then
+        echo "Finance directory already mounted" 1>&2
+        return 1
+    fi
+    if [ ! -d $HOME/finance ]; then
+        mkdir $HOME/finance
+    fi
+    echo "Mounting finance dir read-only"
+    sudo mount -t ecryptfs -o key=passphrase -r $HOME/Dropbox/Finance $HOME/finance
+}
+
+function finance-rw() {
+    if [ ! -d $HOME/Dropbox/Finance ]; then
+        echo "Dropbox/Finance not found." 1>&2
+        return 1
+    fi
+    if [ ! -d $HOME/finance ]; then
+        mkdir $HOME/finance
+    fi
+    sudo mount -t ecryptfs -o key=passphrase $HOME/Dropbox/Finance $HOME/finance
+}
+
+function unfinance() {
+    if [ -d $HOME/finance ]; then
+        sudo umount $HOME/finance
+        rmdir $HOME/finance
+    fi
+}
+
+function sl() {
+    if [ "$TERM" == "dumb" ]; then
+        echo "skipping animation..."
+    else
+        /usr/games/sl "$*"
+    fi
+}
+
+function ro() {
+    sudo mount -o ro,remount $1
+}
+
+function rw() {
+    sudo mount -o rw,remount $1
+}
+
+function docker_clean() {
+    docker rm `docker ps -a | awk '{print $1}'`
+    docker rmi `docker images|grep -v orca|awk '{print $3}'`
+}
+
+# function openvpn() {
+#     enc
+#     cat ~/enc/armory/armory-vpn.txt
+#     unenc
+#     cd $HOME && sudo openvpn --config client.ovpn
+# }
+
+
+# Make a file in /etc/sudoers.d/ with this to allow shutdown without password -
+#(username) (hostname) = ...
+# dpb x100 = NOPASSWD: /sbin/init
+function timer() {
+    (sleep $1 && sudo /sbin/init 0) &
+}
+
+# Source hostname-based bashrc functions and settings.
+
+host_dot_bashrc="$HOME/synced/dot-files/dot-bashrc-`hostname`"
+if [ -f $host_dot_bashrc ]; then
+    . $host_dot_bashrc
+fi
+
+host_user_dot_bashrc="$HOME/synced/dot-files/dot-bashrc-`whoami`-`hostname`"
+if [ -f $host_user_dot_bashrc ]; then
+    . $host_user_dot_bashrc
+fi
+
+function xxxstmarks() {
+    if [ ! -f $HOME/enc/passwords/stmarks-ftp.txt ]; then
+        echo "Encrypted filesystem not mounted."
+        return 1
+    fi
+    if [ ! -d /mnt/stmarks ]; then
+        sudo mkdir /mnt/stmarks
+	sudo chown `whoami`:`whoami` /mnt/stmarks
+    fi
+    pass=`cat $HOME/enc/passwords/stmarks-ftp.txt`
+    curlftpfs -o user=saintma7:$pass saint-marks.com /mnt/stmarks
+}
+
+function xxxunstmarks() {
+    sudo umount /mnt/stmarks
+    sudo rmdir /mnt/stmarks
+}
+
+function xxxrusa() {
+    if [ ! -d /mnt/rusa ]; then
+        sudo mkdir /mnt/rusa
+	sudo chown `whoami`:`whoami` /mnt/rusa
+    fi
+    sshfs -p 1022 rusa@rusa.org:/ /mnt/rusa
+}
+
+function xxxunrusa() {
+    sudo umount /mnt/rusa
+    sudo rmdir /mnt/rusa
+}
+
+function xxxandroid() {
+    if [ ! -d /mnt/android ]; then
+        sudo mkdir /mnt/android
+	sudo chown `whoami`:`whoami` /mnt/android
+    fi
+    sshfs root@192.168.1.78:/ /mnt/android
+}
+
+function xxxunandroid() {
+    sudo umount /mnt/android
+    sudo rmdir /mnt/android
+}
+
+function xxxandroid-backup() {
+    if [ ! -d /mnt/android ]; then
+        echo "nexus-s not mounted." 1>&2
+	return 1
+    fi
+    cd /mnt/android/mnt/sdcard && \
+      rsync -av  $*\
+      --delete --delete-excluded \
+      --exclude=*/com.google.android.music/cache/* \
+      --exclude=*/com.google.earth/temp/* \
+      --exclude=*/com.justpictures/cache/* \
+      --exclude=\*.mp3 \
+      --exclude=\*.m4v \
+      --exclude=\*.mp4 \
+      --exclude=Evernote/* \
+      --exclude=InstaFetch/* \
+      --exclude=com.economist/* \
+      . rsync://backup@nas:/backup/dpb/nexus-s
+}
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+echo "dot-bashrc-dpb Done."

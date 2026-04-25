@@ -23,7 +23,11 @@
       "Bash(curl -s \"https://api.github.com/repos/anthropics/claude-code/contents/scripts\")",
       "Bash(curl -s \"https://raw.githubusercontent.com/anthropics/claude-code/main/README.md\")",
       "WebFetch(domain:clojure.org)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(bash -n /home/dpb/sysconfig/setup.sh)",
+      "Bash(git -C /home/dpb/sysconfig status)",
+      "Bash(git -C /home/dpb/sysconfig diff)",
+      "Bash(git *)"
     ]
   }
 }
