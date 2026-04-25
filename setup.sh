@@ -885,8 +885,9 @@ action_sleep_hibernation() {
         echo ""
         echo "  1) Configure swap partition in /etc/fstab (remove swapfile)"
         echo "  2) Configure GRUB resume= parameter"
-        echo "  3) Bind Ctrl+Super+H to hibernate"
-        echo "  4) Add sudoers rule: dpb can run systemctl without password"
+        echo "  3) Run: sudo update-initramfs -u"
+        echo "  4) Bind Ctrl+Super+H to hibernate"
+        echo "  5) Add sudoers rule: dpb can run systemctl without password"
         echo ""
         echo "  b) Back"
         echo ""
@@ -894,8 +895,9 @@ action_sleep_hibernation() {
         case "$choice" in
             1) action_hibernate_configure_swap ;;
             2) action_hibernate_configure_grub ;;
-            3) action_hibernate_set_shortcut ;;
-            4) action_hibernate_add_sudoers ;;
+            3) sudo update-initramfs -u ;;
+            4) action_hibernate_set_shortcut ;;
+            5) action_hibernate_add_sudoers ;;
             b|B) return 0 ;;
             *) echo "Invalid selection: $choice" ;;
         esac
