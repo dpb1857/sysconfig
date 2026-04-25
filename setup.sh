@@ -551,6 +551,66 @@ action_install_clojure() {
     done
 }
 
+action_dell_printer_install_prereqs() {
+    echo "Adding i386 architecture..."
+    sudo dpkg --add-architecture i386
+    sudo apt update
+    echo "Installing prerequisite packages..."
+    sudo apt install -y libc6:i386 libc6-dev:i386 libcupsimage2:i386 lib32stdc++6 lib32z1
+    echo "Done."
+}
+
+action_dell_printer_install_driver() {
+    local pkg="$SCRIPT_DIR/packages/xerox-phaser-6000-6010_1.0-1_i386.deb"
+    echo "Installing printer driver: $(basename "$pkg")..."
+    sudo dpkg -i "$pkg"
+    echo "Done."
+}
+
+action_dell_printer_configure() {
+    echo "Discovering Dell C1760w on network (this may take 30 seconds)..."
+    local device_uri
+    device_uri=$(lpinfo -v 2>/dev/null | grep -i "C1760" | awk '{print $2}' | head -1)
+    if [[ -z "$device_uri" ]]; then
+        echo "ERROR: Dell C1760w not found on network."
+        return 1
+    fi
+    echo "Found: $device_uri"
+
+    local ppd_model
+    ppd_model=$(lpinfo -m 2>/dev/null | grep -i "Phaser.*6000B\|6000B.*Phaser" | awk '{print $1}' | head -1)
+    if [[ -z "$ppd_model" ]]; then
+        echo "ERROR: Xerox Phaser 6000B PPD not found — install the driver first."
+        return 1
+    fi
+    echo "Using PPD: $ppd_model"
+
+    sudo lpadmin -p "Dell-C1760w" -E -v "$device_uri" -m "$ppd_model"
+    echo "Printer configured successfully."
+}
+
+action_dell_printer_support() {
+    while true; do
+        echo ""
+        echo "Dell Printer Support"
+        echo ""
+        echo "  1) Install prerequisite packages"
+        echo "  2) Install printer driver"
+        echo "  3) Configure printer"
+        echo ""
+        echo "  b) Back"
+        echo ""
+        read -rp "Select: " choice
+        case "$choice" in
+            1) action_dell_printer_install_prereqs ;;
+            2) action_dell_printer_install_driver ;;
+            3) action_dell_printer_configure ;;
+            b|B) return 0 ;;
+            *) echo "Invalid selection: $choice" ;;
+        esac
+    done
+}
+
 action_install_software() {
     while true; do
         echo ""
@@ -593,6 +653,7 @@ MENU_ITEMS=(
     "Install Google Chrome"
     "Customize UI"
     "Install Software"
+    "Dell Printer Support"
 )
 
 MENU_FNS=(
@@ -605,6 +666,7 @@ MENU_FNS=(
     "action_install_chrome"
     "action_customize_ui"
     "action_install_software"
+    "action_dell_printer_support"
 )
 
 # ---------------------------------------------------------------------------
