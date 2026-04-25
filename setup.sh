@@ -479,6 +479,28 @@ action_dropbox_mount() {
     echo "Done."
 }
 
+action_dropbox_symlink_documents() {
+    local src="$HOME/Dropbox/Documents"
+    local dst="$HOME/Documents"
+
+    if [[ -L "$dst" && "$(readlink "$dst")" == "$src" ]]; then
+        echo "Already linked: $dst -> $src"
+        return 0
+    fi
+
+    if [[ -e "$dst" && ! -L "$dst" ]]; then
+        if [[ -d "$dst" && -z "$(ls -A "$dst")" ]]; then
+            rmdir "$dst"
+        else
+            echo "ERROR: $dst exists and is not an empty directory — remove it manually first."
+            return 1
+        fi
+    fi
+
+    ln -sf "$src" "$dst"
+    echo "Linked: $dst -> $src"
+}
+
 action_install_dropbox() {
     while true; do
         echo ""
@@ -489,6 +511,7 @@ action_install_dropbox() {
         echo "  3) Install Dropbox"
         echo "  4) Install Dropbox CLI helper"
         echo "  5) Add 'dropbox start' to login startup"
+        echo "  6) Symlink Documents -> Dropbox/Documents"
         echo ""
         echo "  b) Back"
         echo ""
@@ -499,6 +522,7 @@ action_install_dropbox() {
             3) action_install_dropbox_unpack ;;
             4) action_install_dropbox_cli ;;
             5) action_dropbox_autostart ;;
+            6) action_dropbox_symlink_documents ;;
             b|B) return 0 ;;
             *) echo "Invalid selection: $choice" ;;
         esac
