@@ -112,6 +112,11 @@ action_cinnamon_set_lock_shortcut() {
     echo "Ctrl+Super+L bound to lock screen."
 }
 
+action_cinnamon_set_text_scaling() {
+    gsettings set org.cinnamon.desktop.interface text-scaling-factor 1.2
+    echo "Text scaling factor set to 1.2."
+}
+
 action_cinnamon_ui() {
     while true; do
         echo ""
@@ -122,6 +127,7 @@ action_cinnamon_ui() {
         echo "  3) Set Ctrl+Super+X to launch emacs"
         echo "  4) Bind Ctrl+Super+Z to suspend"
         echo "  5) Bind Ctrl+Super+L to lock screen"
+        echo "  6) Set text scaling factor to 1.2"
         echo ""
         echo "  b) Back"
         echo ""
@@ -132,6 +138,7 @@ action_cinnamon_ui() {
             3) action_cinnamon_set_emacs_launcher ;;
             4) action_cinnamon_set_suspend_shortcut ;;
             5) action_cinnamon_set_lock_shortcut ;;
+            6) action_cinnamon_set_text_scaling ;;
             b|B) return 0 ;;
             *) echo "Invalid selection: $choice" ;;
         esac
