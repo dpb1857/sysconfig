@@ -27,7 +27,10 @@
       "Bash(bash -n /home/dpb/sysconfig/setup.sh)",
       "Bash(git -C /home/dpb/sysconfig status)",
       "Bash(git -C /home/dpb/sysconfig diff)",
-      "Bash(git *)"
+      "Bash(git *)",
+      "Bash(gsettings list-schemas *)",
+      "Bash(gsettings list-keys *)",
+      "Bash(gsettings get *)"
     ]
   }
 }

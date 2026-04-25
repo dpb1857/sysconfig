@@ -878,10 +878,71 @@ action_hibernate_add_sudoers() {
     echo "  $rule"
 }
 
-action_sleep_hibernation() {
+action_power_management_changes() {
+    local logind_conf="/etc/systemd/logind.conf"
+    local de="${XDG_CURRENT_DESKTOP:-}"
+
+    if [[ "$de" == *"GNOME"* ]]; then
+        local schema="org.gnome.settings-daemon.plugins.power"
+        echo "Applying GNOME power management settings..."
+
+        gsettings set "$schema" lid-close-ac-action 'nothing'
+        echo "  AC lid-close → nothing"
+
+        gsettings set "$schema" sleep-inactive-battery-type 'blank'
+        gsettings set "$schema" sleep-inactive-battery-timeout 300
+        echo "  Battery idle screen-off → 5 minutes"
+
+        gsettings set "$schema" lid-close-battery-action 'nothing'
+        echo "  Battery lid-close → nothing"
+
+        gsettings set "$schema" button-power 'nothing'
+        echo "  Power button → nothing"
+
+    elif [[ "$de" == *"X-Cinnamon"* || "$de" == *"CINNAMON"* ]]; then
+        local schema="org.cinnamon.settings-daemon.plugins.power"
+        echo "Applying Cinnamon power management settings..."
+
+        gsettings set "$schema" lid-close-ac-action 'nothing'
+        echo "  AC lid-close → nothing"
+
+        # Cinnamon uses sleep-display-battery (seconds) for battery display timeout
+        gsettings set "$schema" sleep-display-battery 300
+        echo "  Battery idle screen-off → 5 minutes"
+
+        gsettings set "$schema" lid-close-battery-action 'nothing'
+        echo "  Battery lid-close → nothing"
+
+        gsettings set "$schema" button-power 'nothing'
+        echo "  Power button → nothing"
+
+    else
+        echo "ERROR: Unsupported or undetected desktop environment: '${de:-<unset>}'."
+        echo "Supported: GNOME, X-Cinnamon."
+        return 1
+    fi
+
+    echo "Applying /etc/systemd/logind.conf settings..."
+    sudo cp "$logind_conf" "${logind_conf}.bak"
+    echo "Backed up $logind_conf to ${logind_conf}.bak"
+
+    for key in HandleLidSwitch HandleLidSwitchOnBattery; do
+        if grep -qE "^#?${key}=" "$logind_conf"; then
+            sudo sed -i "s|^#*${key}=.*|${key}=ignore|" "$logind_conf"
+        else
+            sudo sed -i "/^\[Login\]/a ${key}=ignore" "$logind_conf"
+        fi
+        echo "  ${key}=ignore"
+    done
+
+    sudo systemctl restart systemd-logind
+    echo "Done."
+}
+
+action_hibernation_submenu() {
     while true; do
         echo ""
-        echo "Sleep & Hibernation"
+        echo "Hibernation"
         echo ""
         echo "  1) Configure swap partition in /etc/fstab (remove swapfile)"
         echo "  2) Configure GRUB resume= parameter"
@@ -898,6 +959,26 @@ action_sleep_hibernation() {
             3) sudo update-initramfs -u ;;
             4) action_hibernate_set_shortcut ;;
             5) action_hibernate_add_sudoers ;;
+            b|B) return 0 ;;
+            *) echo "Invalid selection: $choice" ;;
+        esac
+    done
+}
+
+action_sleep_hibernation() {
+    while true; do
+        echo ""
+        echo "Sleep & Hibernation"
+        echo ""
+        echo "  1) Hibernation"
+        echo "  2) Power Management changes"
+        echo ""
+        echo "  b) Back"
+        echo ""
+        read -rp "Select: " choice
+        case "$choice" in
+            1) action_hibernation_submenu ;;
+            2) action_power_management_changes ;;
             b|B) return 0 ;;
             *) echo "Invalid selection: $choice" ;;
         esac
