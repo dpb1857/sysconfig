@@ -102,6 +102,16 @@ action_cinnamon_set_emacs_launcher() {
     echo "Ctrl+Super+X bound to emacs (slot $key)."
 }
 
+action_cinnamon_set_suspend_shortcut() {
+    gsettings set org.cinnamon.desktop.keybindings.media-keys suspend "['<Primary><Super>z']"
+    echo "Ctrl+Super+Z bound to suspend."
+}
+
+action_cinnamon_set_lock_shortcut() {
+    gsettings set org.cinnamon.desktop.keybindings.media-keys screensaver "['<Control><Alt>l', 'XF86ScreenSaver', '<Primary><Super>l']"
+    echo "Ctrl+Super+L bound to lock screen."
+}
+
 action_cinnamon_ui() {
     while true; do
         echo ""
@@ -110,6 +120,8 @@ action_cinnamon_ui() {
         echo "  1) Set Super+Return to launch terminal"
         echo "  2) Set Ctrl+Super+C to launch browser"
         echo "  3) Set Ctrl+Super+X to launch emacs"
+        echo "  4) Bind Ctrl+Super+Z to suspend"
+        echo "  5) Bind Ctrl+Super+L to lock screen"
         echo ""
         echo "  b) Back"
         echo ""
@@ -118,6 +130,8 @@ action_cinnamon_ui() {
             1) action_cinnamon_set_terminal_launcher ;;
             2) action_cinnamon_set_browser_launcher ;;
             3) action_cinnamon_set_emacs_launcher ;;
+            4) action_cinnamon_set_suspend_shortcut ;;
+            5) action_cinnamon_set_lock_shortcut ;;
             b|B) return 0 ;;
             *) echo "Invalid selection: $choice" ;;
         esac
