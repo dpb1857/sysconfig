@@ -8,39 +8,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Actions — add a function here and a matching entry in MENU_ITEMS/MENU_FNS
 # ---------------------------------------------------------------------------
 
-action_setup_home() {
-    local partlabel_path="/dev/disk/by-partlabel/home"
-
-    if [[ ! -e "$partlabel_path" ]]; then
-        echo "No partition named 'home' was found."
-        return 0
-    fi
-
-    local device fstype uuid
-    device=$(readlink -f "$partlabel_path")
-    fstype=$(lsblk -no FSTYPE "$device")
-    uuid=$(lsblk -no UUID "$device")
-
-    echo "Found partition: $device (type: $fstype, UUID: $uuid)"
-
-    if [[ "$fstype" == "btrfs" ]]; then
-        echo "Partition is btrfs — installing btrfs-progs..."
-        sudo apt install -y btrfs-progs
-    fi
-
-    if grep -q "$uuid" /etc/fstab; then
-        echo "Entry for UUID=$uuid already exists in /etc/fstab — skipping."
-        return 0
-    fi
-
-    echo "Adding /home entry to /etc/fstab..."
-    local mount_opts="defaults"
-    if [[ "$fstype" == "btrfs" ]]; then
-        mount_opts="defaults,subvol=@home"
-    fi
-    echo "UUID=$uuid  /home  $fstype  $mount_opts  0  0" | sudo tee -a /etc/fstab
-    echo "Done."
-}
 
 action_install_claude() {
     if ! command -v curl &>/dev/null; then
@@ -371,7 +338,7 @@ action_install_chrome() {
 
 action_install_system_utils() {
     echo "Installing system utilities..."
-    sudo apt install -y baobab httpie gparted btop mg ripgrep
+    sudo apt install -y baobab btrfs-progs httpie gparted btop mg ripgrep
 }
 
 action_install_office() {
@@ -466,22 +433,57 @@ EOF
     echo "Created: $desktop_file"
 }
 
+action_dropbox_locate_partition() {
+    local partlabel_path="/dev/disk/by-partlabel/Dropbox"
+    local mount_target="/home/dpb/Dropbox"
+
+    if [[ ! -e "$partlabel_path" ]]; then
+        echo "No partition with label 'Dropbox' was found."
+        return 0
+    fi
+
+    local device fstype uuid
+    device=$(readlink -f "$partlabel_path")
+    fstype=$(lsblk -no FSTYPE "$device")
+    uuid=$(lsblk -no UUID "$device")
+
+    echo "Found partition: $device (type: $fstype, UUID: $uuid)"
+
+    if grep -q "$uuid" /etc/fstab; then
+        echo "Entry for UUID=$uuid already exists in /etc/fstab — skipping."
+        return 0
+    fi
+
+    sudo mkdir -p "$mount_target"
+
+    local mount_opts="defaults"
+    if [[ "$fstype" == "btrfs" ]]; then
+        mount_opts="defaults,subvol=@Dropbox"
+    fi
+
+    echo "Adding $mount_target entry to /etc/fstab..."
+    echo "UUID=$uuid  $mount_target  $fstype  $mount_opts  0  0" | sudo tee -a /etc/fstab
+    echo "Done."
+}
+
 action_install_dropbox() {
     while true; do
         echo ""
         echo "Dropbox"
         echo ""
-        echo "  1) Install Dropbox"
-        echo "  2) Install Dropbox CLI helper"
-        echo "  3) Add 'dropbox start' to login startup"
+        echo "  1) Add Dropbox Partition to fstab"
+        echo "  2) Install Dropbox"
+        echo "  3) Install Dropbox CLI helper"
+        echo "  4) Add 'dropbox start' to login startup"
         echo ""
         echo "  b) Back"
         echo ""
         read -rp "Select: " choice
         case "$choice" in
-            1) action_install_dropbox_unpack ;;
-            2) action_install_dropbox_cli ;;
-            3) action_dropbox_autostart ;;
+            1) action_dropbox_locate_partition ;;
+            2) action_install_dropbox_unpack ;;
+            3) action_install_dropbox_cli ;;
+            4) action_dropbox_autostart ;;
             b|B) return 0 ;;
             *) echo "Invalid selection: $choice" ;;
         esac
@@ -515,7 +517,7 @@ action_install_software() {
         echo ""
         echo "Install Software"
         echo ""
-        echo "  1) System Utils (baobab, httpie, gparted, btop, mg, ripgrep)"
+        echo "  1) System Utils (baobab, btrfs-progs, httpie, gparted, btop, mg, ripgrep)"
         echo "  2) Office (xournal)"
         echo "  3) Media (ubuntu-restricted-extras, digikam, ffmpeg, gimp, gscan2pdf, vlc)"
         echo "  4) Devtools (jq, make)"
@@ -543,7 +545,6 @@ action_install_software() {
 # ---------------------------------------------------------------------------
 
 MENU_ITEMS=(
-    "Setup home partition (fstab + btrfs-progs)"
     "Install Claude Code"
     "Link Dotfiles (.bash_aliases)"
     "Setup private directory (ecryptfs-setup-private)"
@@ -556,7 +557,6 @@ MENU_ITEMS=(
 )
 
 MENU_FNS=(
-    "action_setup_home"
     "action_install_claude"
     "action_link_dotfiles"
     "action_setup_private"
