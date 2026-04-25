@@ -124,6 +124,87 @@ action_cinnamon_ui() {
     done
 }
 
+action_gnome50_set_terminal_launcher() {
+    gsettings set org.gnome.settings-daemon.plugins.media-keys terminal "['<Super>Return']"
+    echo "Super+Return bound to terminal launcher."
+}
+
+action_gnome50_set_browser_launcher() {
+    local schema="org.gnome.settings-daemon.plugins.media-keys"
+    local base_path="/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings"
+
+    local raw_list
+    raw_list=$(gsettings get "$schema" custom-keybindings 2>/dev/null)
+
+    local slot=0
+    while [[ "$raw_list" == *"custom$slot"* ]]; do
+        slot=$((slot + 1))
+    done
+    local key="custom$slot"
+    local path="$base_path/$key/"
+
+    gsettings set "org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$path" name "Launch Browser"
+    gsettings set "org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$path" command "x-www-browser"
+    gsettings set "org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$path" binding "<Primary><Super>c"
+
+    if [[ "$raw_list" == "@as []" || "$raw_list" == "[]" ]]; then
+        gsettings set "$schema" custom-keybindings "['$path']"
+    else
+        gsettings set "$schema" custom-keybindings "${raw_list%]}, '$path']"
+    fi
+
+    echo "Ctrl+Super+C bound to x-www-browser (slot $key)."
+}
+
+action_gnome50_set_emacs_launcher() {
+    local schema="org.gnome.settings-daemon.plugins.media-keys"
+    local base_path="/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings"
+
+    local raw_list
+    raw_list=$(gsettings get "$schema" custom-keybindings 2>/dev/null)
+
+    local slot=0
+    while [[ "$raw_list" == *"custom$slot"* ]]; do
+        slot=$((slot + 1))
+    done
+    local key="custom$slot"
+    local path="$base_path/$key/"
+
+    gsettings set "org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$path" name "Launch Emacs"
+    gsettings set "org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$path" command 'bash -c "cd $HOME && exec /usr/bin/emacs"'
+    gsettings set "org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$path" binding "<Primary><Super>x"
+
+    if [[ "$raw_list" == "@as []" || "$raw_list" == "[]" ]]; then
+        gsettings set "$schema" custom-keybindings "['$path']"
+    else
+        gsettings set "$schema" custom-keybindings "${raw_list%]}, '$path']"
+    fi
+
+    echo "Ctrl+Super+X bound to emacs (slot $key)."
+}
+
+action_gnome50_ui() {
+    while true; do
+        echo ""
+        echo "Gnome 50 (Ubuntu 26.04)"
+        echo ""
+        echo "  1) Set Super+Return to launch terminal"
+        echo "  2) Set Ctrl+Super+C to launch browser"
+        echo "  3) Set Ctrl+Super+X to launch emacs"
+        echo ""
+        echo "  b) Back"
+        echo ""
+        read -rp "Select: " choice
+        case "$choice" in
+            1) action_gnome50_set_terminal_launcher ;;
+            2) action_gnome50_set_browser_launcher ;;
+            3) action_gnome50_set_emacs_launcher ;;
+            b|B) return 0 ;;
+            *) echo "Invalid selection: $choice" ;;
+        esac
+    done
+}
+
 action_customize_ui() {
     while true; do
         echo ""
@@ -131,6 +212,7 @@ action_customize_ui() {
         echo ""
         echo "  1) Map Caps Lock to Left Control"
         echo "  2) Cinnamon UI"
+        echo "  3) Gnome 50 (Ubuntu 26.04)"
         echo ""
         echo "  b) Back"
         echo ""
@@ -151,6 +233,7 @@ action_customize_ui() {
                 echo "Caps Lock mapped to Left Control (log out and back in if not effective immediately)."
                 ;;
             2) action_cinnamon_ui ;;
+            3) action_gnome50_ui ;;
             b|B) return 0 ;;
             *) echo "Invalid selection: $choice" ;;
         esac
@@ -326,6 +409,10 @@ action_pivot_github_origin() {
 }
 
 action_install_chrome() {
+    if ! command -v curl &>/dev/null; then
+        echo "Installing curl..."
+        sudo apt install -y curl
+    fi
     echo "Adding Google Chrome repository..."
     curl -fsSL https://dl.google.com/linux/linux_signing_key.pub \
         | sudo gpg --dearmor -o /usr/share/keyrings/google-chrome.gpg
