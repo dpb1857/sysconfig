@@ -466,24 +466,39 @@ action_dropbox_locate_partition() {
     echo "Done."
 }
 
+action_dropbox_mount() {
+    local mount_target="/home/dpb/Dropbox"
+
+    if mountpoint -q "$mount_target"; then
+        echo "$mount_target is already mounted."
+        return 0
+    fi
+
+    echo "Mounting $mount_target..."
+    sudo mount "$mount_target"
+    echo "Done."
+}
+
 action_install_dropbox() {
     while true; do
         echo ""
         echo "Dropbox"
         echo ""
         echo "  1) Add Dropbox Partition to fstab"
-        echo "  2) Install Dropbox"
-        echo "  3) Install Dropbox CLI helper"
-        echo "  4) Add 'dropbox start' to login startup"
+        echo "  2) Mount Dropbox Partition"
+        echo "  3) Install Dropbox"
+        echo "  4) Install Dropbox CLI helper"
+        echo "  5) Add 'dropbox start' to login startup"
         echo ""
         echo "  b) Back"
         echo ""
         read -rp "Select: " choice
         case "$choice" in
             1) action_dropbox_locate_partition ;;
-            2) action_install_dropbox_unpack ;;
-            3) action_install_dropbox_cli ;;
-            4) action_dropbox_autostart ;;
+            2) action_dropbox_mount ;;
+            3) action_install_dropbox_unpack ;;
+            4) action_install_dropbox_cli ;;
+            5) action_dropbox_autostart ;;
             b|B) return 0 ;;
             *) echo "Invalid selection: $choice" ;;
         esac
