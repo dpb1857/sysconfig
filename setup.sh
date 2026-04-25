@@ -190,6 +190,24 @@ action_customize_ui() {
     done
 }
 
+action_link_dotfiles() {
+    local src="$SCRIPT_DIR/dot-files/dot-bash_aliases"
+    local dst="$HOME/.bash_aliases"
+
+    if [[ -L "$dst" && "$(readlink "$dst")" == "$src" ]]; then
+        echo "Already linked: $dst -> $src"
+        return 0
+    fi
+
+    if [[ -e "$dst" && ! -L "$dst" ]]; then
+        echo "ERROR: $dst exists and is not a symlink — remove it manually first."
+        return 1
+    fi
+
+    ln -sf "$src" "$dst"
+    echo "Linked: $dst -> $src"
+}
+
 action_setup_private() {
     if ! dpkg -s ecryptfs-utils &>/dev/null; then
         echo "Installing ecryptfs-utils..."
@@ -353,7 +371,7 @@ action_install_chrome() {
 
 action_install_system_utils() {
     echo "Installing system utilities..."
-    sudo apt install -y baobab httpie gparted btop ripgrep
+    sudo apt install -y baobab httpie gparted btop mg ripgrep
 }
 
 action_install_office() {
@@ -406,6 +424,70 @@ action_install_babashka() {
     rm install
 }
 
+action_install_dropbox_unpack() {
+    if [[ ! -d "$HOME/Dropbox" && ! -d "$HOME/.dropbox" ]]; then
+        echo "WARNING: Neither ~/Dropbox nor ~/.dropbox exist."
+        echo "If you copy those directories from another machine first, Dropbox can"
+        echo "resume syncing rather than downloading everything from scratch."
+        read -rp "Continue anyway? [y/N] " confirm
+        [[ "$confirm" =~ ^[Yy]$ ]] || return 0
+    fi
+    echo "Downloading Dropbox..."
+    curl -fsSL "https://www.dropbox.com/download?plat=lnx.x86_64" | tar xvzf - -C "$HOME"
+    echo "Done."
+}
+
+action_install_dropbox_cli() {
+    echo "Downloading Dropbox CLI helper..."
+    sudo curl -fsSL "https://www.dropbox.com/download?dl=packages/dropbox.py" \
+        -o /usr/local/bin/dropbox
+    sudo chmod +x /usr/local/bin/dropbox
+    echo "Installed: /usr/local/bin/dropbox"
+}
+
+action_dropbox_autostart() {
+    local autostart_dir="$HOME/.config/autostart"
+    local desktop_file="$autostart_dir/dropbox.desktop"
+
+    if [[ -f "$desktop_file" ]]; then
+        echo "Autostart entry already exists: $desktop_file"
+        return 0
+    fi
+
+    mkdir -p "$autostart_dir"
+    cat > "$desktop_file" <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Dropbox
+Exec=dropbox start
+Hidden=false
+X-GNOME-Autostart-enabled=true
+EOF
+    echo "Created: $desktop_file"
+}
+
+action_install_dropbox() {
+    while true; do
+        echo ""
+        echo "Dropbox"
+        echo ""
+        echo "  1) Install Dropbox"
+        echo "  2) Install Dropbox CLI helper"
+        echo "  3) Add 'dropbox start' to login startup"
+        echo ""
+        echo "  b) Back"
+        echo ""
+        read -rp "Select: " choice
+        case "$choice" in
+            1) action_install_dropbox_unpack ;;
+            2) action_install_dropbox_cli ;;
+            3) action_dropbox_autostart ;;
+            b|B) return 0 ;;
+            *) echo "Invalid selection: $choice" ;;
+        esac
+    done
+}
+
 action_install_clojure() {
     while true; do
         echo ""
@@ -433,11 +515,12 @@ action_install_software() {
         echo ""
         echo "Install Software"
         echo ""
-        echo "  1) System Utils (baobab, httpie, gparted, btop, ripgrep)"
+        echo "  1) System Utils (baobab, httpie, gparted, btop, mg, ripgrep)"
         echo "  2) Office (xournal)"
         echo "  3) Media (ubuntu-restricted-extras, digikam, ffmpeg, gimp, gscan2pdf, vlc)"
         echo "  4) Devtools (jq, make)"
-        echo "  5) Clojure"
+        echo "  5) Dropbox"
+        echo "  6) Clojure"
         echo ""
         echo "  b) Back"
         echo ""
@@ -447,7 +530,8 @@ action_install_software() {
             2) action_install_office ;;
             3) action_install_media ;;
             4) action_install_devtools ;;
-            5) action_install_clojure ;;
+            5) action_install_dropbox ;;
+            6) action_install_clojure ;;
             b|B) return 0 ;;
             *) echo "Invalid selection: $choice" ;;
         esac
@@ -461,6 +545,7 @@ action_install_software() {
 MENU_ITEMS=(
     "Setup home partition (fstab + btrfs-progs)"
     "Install Claude Code"
+    "Link Dotfiles (.bash_aliases)"
     "Setup private directory (ecryptfs-setup-private)"
     "Setup SSH keys (copy, decrypt, fix permissions)"
     "Pivot GitHub origin URL to SSH (git@github.com)"
@@ -473,6 +558,7 @@ MENU_ITEMS=(
 MENU_FNS=(
     "action_setup_home"
     "action_install_claude"
+    "action_link_dotfiles"
     "action_setup_private"
     "action_setup_ssh"
     "action_pivot_github_origin"
