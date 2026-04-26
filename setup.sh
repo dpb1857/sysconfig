@@ -1032,6 +1032,12 @@ action_hibernation_submenu() {
 }
 
 action_configure_screensaver() {
+    local de="${XDG_CURRENT_DESKTOP:-}"
+    if [[ "$de" != *"Cinnamon"* ]]; then
+        echo "Warning: screensaver configuration requires Cinnamon (current desktop: ${de:-unknown})"
+        return
+    fi
+
     # Delay before screensaver starts: 5 minutes
     gsettings set org.cinnamon.desktop.session idle-delay 300
     echo "  Screensaver delay → 5 minutes"
