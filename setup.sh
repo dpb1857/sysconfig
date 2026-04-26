@@ -995,6 +995,22 @@ action_hibernation_submenu() {
     done
 }
 
+action_configure_screensaver() {
+    # Delay before screensaver starts: 5 minutes
+    gsettings set org.cinnamon.desktop.session idle-delay 300
+    echo "  Screensaver delay → 5 minutes"
+
+    # Do not lock when the system goes to sleep
+    gsettings set org.cinnamon.settings-daemon.plugins.power lock-on-suspend false
+    echo "  Lock on sleep → disabled"
+
+    # Do not lock when the screensaver starts
+    gsettings set org.cinnamon.desktop.screensaver lock-enabled false
+    echo "  Lock on screensaver → disabled"
+
+    echo "Done."
+}
+
 action_sleep_hibernation() {
     while true; do
         echo ""
@@ -1002,6 +1018,7 @@ action_sleep_hibernation() {
         echo ""
         echo "  1) Hibernation"
         echo "  2) Power Management changes"
+        echo "  3) Configure Screensaver"
         echo ""
         echo "  b) Back"
         echo ""
@@ -1009,6 +1026,7 @@ action_sleep_hibernation() {
         case "$choice" in
             1) action_hibernation_submenu ;;
             2) action_power_management_changes ;;
+            3) action_configure_screensaver ;;
             b|B) return 0 ;;
             *) echo "Invalid selection: $choice" ;;
         esac
