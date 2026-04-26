@@ -244,6 +244,23 @@ action_gnome50_set_lock_shortcut() {
     echo "Ctrl+Super+L bound to lock screen."
 }
 
+action_gnome50_set_workspace_keybindings() {
+    local schema="org.gnome.desktop.wm.keybindings"
+    gsettings set "$schema" switch-to-workspace-1 "['<Super>AudioMute']"
+    gsettings set "$schema" switch-to-workspace-2 "['<Super>AudioLowerVolume']"
+    gsettings set "$schema" switch-to-workspace-3 "['<Super>AudioRaiseVolume']"
+    gsettings set "$schema" switch-to-workspace-4 "['<Super>AudioMicMute']"
+    gsettings set "$schema" switch-to-workspace-5 "['<Super>MonBrightnessDown']"
+    gsettings set "$schema" switch-to-workspace-6 "['<Super>MonBrightnessUp']"
+    gsettings set "$schema" move-to-workspace-1 "['<Shift>AudioMute']"
+    gsettings set "$schema" move-to-workspace-2 "['<Shift>AudioLowerVolume']"
+    gsettings set "$schema" move-to-workspace-3 "['<Shift>AudioRaiseVolume']"
+    gsettings set "$schema" move-to-workspace-4 "['<Shift>AudioMicMute']"
+    gsettings set "$schema" move-to-workspace-5 "['<Shift>MonBrightnessDown']"
+    gsettings set "$schema" move-to-workspace-6 "['<Shift>MonBrightnessUp']"
+    echo "Workspace keybindings set (Super+F1-F6 to switch, Shift+F1-F6 to move window)."
+}
+
 action_gnome50_ui() {
     while true; do
         echo ""
@@ -254,6 +271,7 @@ action_gnome50_ui() {
         echo "  3) Set Ctrl+Super+X to launch emacs"
         echo "  4) Bind Ctrl+Super+Z to suspend"
         echo "  5) Bind Ctrl+Super+L to lock screen"
+        echo "  6) Bind workspace switch/move keys (Super+F1-F6 / Shift+F1-F6)"
         echo ""
         echo "  b) Back"
         echo ""
@@ -264,6 +282,7 @@ action_gnome50_ui() {
             3) action_gnome50_set_emacs_launcher ;;
             4) action_gnome50_set_suspend_shortcut ;;
             5) action_gnome50_set_lock_shortcut ;;
+            6) action_gnome50_set_workspace_keybindings ;;
             b|B) return 0 ;;
             *) echo "Invalid selection: $choice" ;;
         esac
