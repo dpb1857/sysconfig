@@ -118,6 +118,9 @@ action_cinnamon_set_text_scaling() {
 }
 
 action_cinnamon_set_workspace_keybindings() {
+    gsettings set org.cinnamon.desktop.wm.preferences num-workspaces 6
+    echo "  6 workspaces configured"
+
     local schema="org.cinnamon.desktop.keybindings.wm"
     # Super+Fn keys (F1-F6) to switch to workspace 1-6
     gsettings set "$schema" switch-to-workspace-1 "['<Super>AudioMute']"
@@ -133,7 +136,7 @@ action_cinnamon_set_workspace_keybindings() {
     gsettings set "$schema" move-to-workspace-4 "['<Shift>AudioMicMute']"
     gsettings set "$schema" move-to-workspace-5 "['<Shift>MonBrightnessDown']"
     gsettings set "$schema" move-to-workspace-6 "['<Shift>MonBrightnessUp']"
-    echo "Workspace keybindings set (Super+F1-F6 to switch, Shift+F1-F6 to move window)."
+    echo "  Workspace keybindings set (Super+F1-F6 to switch, Shift+F1-F6 to move window)"
 }
 
 action_cinnamon_set_panel_autohide() {
@@ -155,7 +158,7 @@ action_cinnamon_ui() {
         echo "  5) Bind Ctrl+Super+L to lock screen"
         echo "  6) Set text scaling factor to 1.2"
         echo "  7) Enable panel auto-hide (show: 500ms, hide: 250ms)"
-        echo "  8) Bind workspace switch/move keys (Super+F1-F6 / Shift+F1-F6)"
+        echo "  8) Configure workspaces (6 static; Super+F1-F6 to switch, Shift+F1-F6 to move)"
         echo ""
         echo "  b) Back"
         echo ""
