@@ -728,10 +728,16 @@ action_dell_printer_support() {
     done
 }
 
+action_remove_firefox_thunderbird() {
+    sudo snap remove firefox thunderbird
+    sudo apt-get remove --purge -y firefox thunderbird
+    echo "Firefox and Thunderbird removed."
+}
+
 action_install_software() {
     while true; do
         echo ""
-        echo "Install Software"
+        echo "Add/Remove Software"
         echo ""
         echo "  1) System Utils (baobab, btrfs-progs, httpie, gparted, btop, mg, ripgrep)"
         echo "  2) Office (xournal)"
@@ -739,6 +745,7 @@ action_install_software() {
         echo "  4) Devtools (jq, make)"
         echo "  5) Dropbox"
         echo "  6) Clojure"
+        echo "  7) Remove Firefox & Thunderbird"
         echo ""
         echo "  b) Back"
         echo ""
@@ -750,6 +757,7 @@ action_install_software() {
             4) action_install_devtools ;;
             5) action_install_dropbox ;;
             6) action_install_clojure ;;
+            7) action_remove_firefox_thunderbird ;;
             b|B) return 0 ;;
             *) echo "Invalid selection: $choice" ;;
         esac
@@ -1046,7 +1054,7 @@ MENU_ITEMS=(
     "Install Emacs (copy dot-emacs)"
     "Install Google Chrome"
     "Customize UI"
-    "Install Software"
+    "Add/Remove Software"
     "Dell Printer Support"
     "Sleep & Hibernation"
 )
