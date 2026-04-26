@@ -960,8 +960,10 @@ action_power_management_changes() {
         gsettings set "$schema" lid-close-battery-action 'nothing'
         echo "  Battery lid-close → nothing"
 
-        gsettings set "$schema" button-power 'nothing'
-        echo "  Power button → nothing"
+        if gsettings describe "$schema" button-power &>/dev/null; then
+            gsettings set "$schema" button-power 'nothing'
+            echo "  Power button → nothing"
+        fi
 
     elif [[ "$de" == *"X-Cinnamon"* || "$de" == *"CINNAMON"* ]]; then
         local schema="org.cinnamon.settings-daemon.plugins.power"
