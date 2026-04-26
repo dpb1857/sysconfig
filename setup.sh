@@ -731,6 +731,14 @@ action_dell_printer_support() {
 action_remove_firefox_thunderbird() {
     sudo snap remove firefox thunderbird
     sudo apt-get remove --purge -y firefox thunderbird
+
+    local seed_dir="/var/lib/snapd/seed"
+    sudo rm -f "$seed_dir"/snaps/firefox_*.snap \
+               "$seed_dir"/snaps/thunderbird_*.snap \
+               "$seed_dir"/assertions/firefox_*.assert \
+               "$seed_dir"/assertions/thunderbird_*.assert
+    sudo sed -i '/^  -$/{N;N;N;/name: firefox\|name: thunderbird/d}' "$seed_dir/seed.yaml"
+
     echo "Firefox and Thunderbird removed."
 }
 
