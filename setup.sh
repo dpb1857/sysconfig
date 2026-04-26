@@ -729,7 +729,11 @@ action_dell_printer_support() {
 }
 
 action_remove_firefox_thunderbird() {
-    sudo snap remove firefox thunderbird
+    for snap_pkg in firefox thunderbird; do
+        if snap list "$snap_pkg" &>/dev/null; then
+            sudo snap remove --purge "$snap_pkg"
+        fi
+    done
     sudo apt-get remove --purge -y firefox thunderbird
 
     local seed_dir="/var/lib/snapd/seed"
