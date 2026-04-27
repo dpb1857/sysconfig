@@ -331,10 +331,11 @@ action_customize_ui() {
     done
 }
 
-action_link_dotfiles() {
+action_local_symlinks() {
     local pairs=(
         "$SCRIPT_DIR/dot-files/dot-bash_aliases|$HOME/.bash_aliases"
         "$SCRIPT_DIR/dot-files/dot-gitconfig|$HOME/.gitconfig"
+        "$SCRIPT_DIR/bin|$HOME/bin"
     )
 
     for pair in "${pairs[@]}"; do
@@ -343,7 +344,9 @@ action_link_dotfiles() {
 
         if [[ -L "$dst" && "$(readlink "$dst")" == "$src" ]]; then
             echo "Already linked: $dst -> $src"
-        elif [[ -e "$dst" && ! -L "$dst" ]]; then
+        elif [[ -L "$dst" ]]; then
+            echo "ERROR: $dst is a symlink to a different target — remove it manually first."
+        elif [[ -e "$dst" ]]; then
             echo "ERROR: $dst exists and is not a symlink — remove it manually first."
         else
             ln -sf "$src" "$dst"
@@ -1142,7 +1145,7 @@ action_sleep_hibernation() {
 
 MENU_ITEMS=(
     "Install Claude Code"
-    "Link Dotfiles (.bash_aliases)"
+    "Local Symlinks (dotfiles, \$HOME/bin)"
     "Setup private directory (ecryptfs-setup-private)"
     "Setup SSH keys (copy, decrypt, fix permissions)"
     "Pivot GitHub origin URL to SSH (git@github.com)"
@@ -1156,7 +1159,7 @@ MENU_ITEMS=(
 
 MENU_FNS=(
     "action_install_claude"
-    "action_link_dotfiles"
+    "action_local_symlinks"
     "action_setup_private"
     "action_setup_ssh"
     "action_pivot_github_origin"
