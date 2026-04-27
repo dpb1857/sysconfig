@@ -809,6 +809,35 @@ action_install_filesystem_utils() {
     sudo apt-get install -y ecryptfs-utils cryptsetup sshfs exfatprogs exfat-fuse nfs-common btrfs-progs
 }
 
+action_install_pyenv() {
+    if [[ -d "$HOME/.pyenv" ]]; then
+        echo "pyenv already installed at $HOME/.pyenv"
+        return 0
+    fi
+
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+        gcc \
+        libbz2-dev zlib1g-dev liblzma-dev \
+        libsqlite3-dev libgdbm-dev \
+        libncurses-dev libreadline-dev uuid-dev libffi-dev libssl-dev \
+        tk-dev
+
+    git clone https://github.com/pyenv/pyenv.git "$HOME/.pyenv"
+    (cd "$HOME/.pyenv" && src/configure && make -C src)
+
+    if ! grep -q 'PYENV_ROOT' "$HOME/.bashrc"; then
+        echo 'export PYENV_ROOT="$HOME/.pyenv"' >> "$HOME/.bashrc"
+        echo 'command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"' >> "$HOME/.bashrc"
+        echo 'eval "$(pyenv init -)"' >> "$HOME/.bashrc"
+        echo "pyenv init added to $HOME/.bashrc"
+    else
+        echo "pyenv init already present in $HOME/.bashrc — skipping"
+    fi
+
+    export PATH="$HOME/.pyenv/bin:$PATH"
+    echo "pyenv installed at $HOME/.pyenv"
+}
+
 action_install_software() {
     while true; do
         echo ""
@@ -821,7 +850,8 @@ action_install_software() {
         echo "  5) Devtools (jq, make)"
         echo "  6) Dropbox"
         echo "  7) Clojure"
-        echo "  8) Remove Firefox & Thunderbird"
+        echo "  8) Python (pyenv)"
+        echo "  9) Remove Firefox & Thunderbird"
         echo ""
         echo "  b) Back"
         echo ""
@@ -834,7 +864,8 @@ action_install_software() {
             5) action_install_devtools ;;
             6) action_install_dropbox ;;
             7) action_install_clojure ;;
-            8) action_remove_firefox_thunderbird ;;
+            8) action_install_pyenv ;;
+            9) action_remove_firefox_thunderbird ;;
             b|B) return 0 ;;
             *) echo "Invalid selection: $choice" ;;
         esac
