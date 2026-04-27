@@ -30,7 +30,15 @@
       "Bash(git *)",
       "Bash(gsettings list-schemas *)",
       "Bash(gsettings list-keys *)",
-      "Bash(gsettings get *)"
+      "Bash(gsettings get *)",
+      "Bash(dconf list *)",
+      "Bash(dconf dump *)",
+      "Bash(dconf write *)",
+      "Bash(dconf read *)",
+      "Bash(gsettings set *)",
+      "Bash(snap list *)",
+      "Bash(sudo snap *)",
+      "Bash(curl -s https://code.claude.com/docs/en/claude-directory.md)"
     ]
   }
 }

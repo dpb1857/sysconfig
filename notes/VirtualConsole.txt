@@ -1,0 +1,3 @@
+To switch, use: c-m-FN<N>; so to switch to virtual console #1, the graphical login screen:
+
+  fn-c-m-1  (fn to access the function keys on the top row)
