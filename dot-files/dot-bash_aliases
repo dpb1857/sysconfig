@@ -128,4 +128,46 @@ function unfinance() {
     fi
 }
 
+function vc() {
+    if [ ! -d /mnt/vc ]; then
+        sudo mkdir /mnt/vc
+    fi
+    device=`sudo losetup -f $HOME/Dropbox/Legacy/vcdata --show`
+    sudo cryptsetup luksOpen $device vc
+    sudo mount /dev/mapper/vc /mnt/vc
+    echo $device > /tmp/vcloop
+}
+
+function unvc() {
+    sudo umount /mnt/vc
+    sudo rmdir /mnt/vc
+    sudo cryptsetup luksClose vc
+    if [ -f /tmp/vcloop ]; then
+        sudo losetup -d `cat /tmp/vcloop`
+        rm -f /tmp/vcloop
+    fi
+}
+
+function stuff() {
+    if [ ! -d /mnt/stuff ]; then
+        sudo mkdir /mnt/stuff
+    fi
+    device=`sudo losetup -f $HOME/Dropbox/Legacy/stuff --show`
+    sudo cryptsetup luksOpen $device stuff
+    sudo mount /dev/mapper/stuff /mnt/stuff
+    echo $device > /tmp/stuffloop
+}
+
+function unstuff() {
+    sudo umount /mnt/stuff
+    sudo rmdir /mnt/stuff
+    sudo cryptsetup luksClose stuff
+    if [ -f /tmp/stuffloop ]; then
+        sudo losetup -d `cat /tmp/stuffloop`
+        rm -f /tmp/stuffloop
+    fi
+}
+
+
+
 echo "dot-bashrc_aliases Done."
