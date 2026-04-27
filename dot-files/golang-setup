@@ -1,0 +1,15 @@
+
+if [ -d /opt/go ]; then
+    export GOROOT=/opt/go
+elif [ -d /usr/lib/google-golang ]; then
+    export GOROOT=/usr/lib/google-golang
+fi
+
+# Setup go environment
+if [ -d /mnt/space/goprojects ]; then
+    export GOPATH=/mnt/space/goprojects
+elif [ -d $HOME/goprojects ]; then
+    export GOPATH=$HOME/goprojects
+fi
+
+PATH=$PATH:$GOPATH/bin

@@ -890,6 +890,16 @@ action_install_nvm_node() {
     echo "nvm $nvm_version and Node.js installed."
 }
 
+action_install_zoom() {
+    local tmp
+    tmp=$(mktemp --suffix=.deb)
+    echo "Downloading Zoom..."
+    curl -fsSL -o "$tmp" https://zoom.us/client/latest/zoom_amd64.deb
+    sudo apt-get install -y "$tmp"
+    rm -f "$tmp"
+    echo "Zoom installed."
+}
+
 action_install_software() {
     while true; do
         echo ""
@@ -905,7 +915,8 @@ action_install_software() {
         echo "  8) Clojure"
         echo "  9) Python (pyenv)"
         echo " 10) Python (latest CPython)"
-        echo " 11) Remove Firefox & Thunderbird"
+        echo " 11) Zoom"
+        echo " 12) Remove Firefox & Thunderbird"
         echo ""
         echo "  b) Back"
         echo ""
@@ -921,7 +932,8 @@ action_install_software() {
             8) action_install_clojure ;;
             9) action_install_pyenv ;;
             10) action_install_cpython_latest ;;
-            11) action_remove_firefox_thunderbird ;;
+            11) action_install_zoom ;;
+            12) action_remove_firefox_thunderbird ;;
             b|B) return 0 ;;
             *) echo "Invalid selection: $choice" ;;
         esac
