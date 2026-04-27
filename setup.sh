@@ -512,6 +512,9 @@ action_install_chrome() {
     sudo apt install -y google-chrome-stable
 }
 
+# TODO: check out other system tools -
+# iotop, nmap, usb-creator-gtk, sysstat, traceroute, net-tools;
+
 action_install_system_utils() {
     echo "Installing system utilities..."
     sudo apt install -y baobab httpie gparted btop mg ripgrep
@@ -860,6 +863,33 @@ action_install_cpython_latest() {
     echo "CPython $latest installed and set as global default."
 }
 
+action_install_nvm_node() {
+    if [[ -d "$HOME/.nvm" ]]; then
+        echo "nvm already installed at $HOME/.nvm"
+        return 0
+    fi
+
+    local nvm_version
+    nvm_version=$(curl -s https://api.github.com/repos/nvm-sh/nvm/releases/latest \
+        | grep '"tag_name"' | cut -d'"' -f4)
+    if [[ -z "$nvm_version" ]]; then
+        echo "ERROR: Could not determine latest nvm version."
+        return 1
+    fi
+
+    echo "Installing nvm $nvm_version..."
+    curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${nvm_version}/install.sh" | bash
+
+    # Source nvm in the current shell session
+    export NVM_DIR="$HOME/.nvm"
+    # shellcheck disable=SC1091
+    source "$NVM_DIR/nvm.sh"
+
+    echo "Installing latest Node.js..."
+    nvm install node
+    echo "nvm $nvm_version and Node.js installed."
+}
+
 action_install_software() {
     while true; do
         echo ""
@@ -871,10 +901,11 @@ action_install_software() {
         echo "  4) Media (ubuntu-restricted-extras, digikam, ffmpeg, gimp, gscan2pdf, vlc)"
         echo "  5) Devtools (jq, make)"
         echo "  6) Dropbox"
-        echo "  7) Clojure"
-        echo "  8) Python (pyenv)"
-        echo "  9) Python (latest CPython)"
-        echo " 10) Remove Firefox & Thunderbird"
+        echo "  7) Install nvm & node"
+        echo "  8) Clojure"
+        echo "  9) Python (pyenv)"
+        echo " 10) Python (latest CPython)"
+        echo " 11) Remove Firefox & Thunderbird"
         echo ""
         echo "  b) Back"
         echo ""
@@ -886,10 +917,11 @@ action_install_software() {
             4) action_install_media ;;
             5) action_install_devtools ;;
             6) action_install_dropbox ;;
-            7) action_install_clojure ;;
-            8) action_install_pyenv ;;
-            9) action_install_cpython_latest ;;
-            10) action_remove_firefox_thunderbird ;;
+            7) action_install_nvm_node ;;
+            8) action_install_clojure ;;
+            9) action_install_pyenv ;;
+            10) action_install_cpython_latest ;;
+            11) action_remove_firefox_thunderbird ;;
             b|B) return 0 ;;
             *) echo "Invalid selection: $choice" ;;
         esac
