@@ -1100,14 +1100,26 @@ action_configure_screensaver() {
     echo "Done."
 }
 
+action_enable_sysrq() {
+    local conf="/etc/sysctl.d/99-sysrq.conf"
+    if [[ -f "$conf" ]] && grep -q "^kernel.sysrq = 1" "$conf"; then
+        echo "SysRq already enabled ($conf)."
+        return 0
+    fi
+    echo "kernel.sysrq = 1" | sudo tee "$conf" > /dev/null
+    sudo sysctl -p "$conf"
+    echo "All SysRq functions enabled."
+}
+
 action_sleep_hibernation() {
     while true; do
         echo ""
-        echo "Sleep & Hibernation"
+        echo "Sleep / Hibernation / SysRq"
         echo ""
         echo "  1) Hibernation"
         echo "  2) Power Management changes"
         echo "  3) Configure Screensaver"
+        echo "  4) Enable all SysRq functions"
         echo ""
         echo "  b) Back"
         echo ""
@@ -1116,6 +1128,7 @@ action_sleep_hibernation() {
             1) action_hibernation_submenu ;;
             2) action_power_management_changes ;;
             3) action_configure_screensaver ;;
+            4) action_enable_sysrq ;;
             b|B) return 0 ;;
             *) echo "Invalid selection: $choice" ;;
         esac
@@ -1137,7 +1150,7 @@ MENU_ITEMS=(
     "Customize UI"
     "Add/Remove Software"
     "Dell Printer Support"
-    "Sleep & Hibernation"
+    "Sleep / Hibernation / SysRq"
 )
 
 MENU_FNS=(
