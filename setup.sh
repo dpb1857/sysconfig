@@ -838,6 +838,28 @@ action_install_pyenv() {
     echo "pyenv installed at $HOME/.pyenv"
 }
 
+action_install_cpython_latest() {
+    if [[ ! -d "$HOME/.pyenv" ]]; then
+        echo "ERROR: pyenv is not installed — run 'Python (pyenv)' first."
+        return 1
+    fi
+
+    # Ensure pyenv is in PATH for this session
+    export PATH="$HOME/.pyenv/bin:$PATH"
+
+    local latest
+    latest=$(pyenv install --list | grep -E '^\s+[0-9]+\.[0-9]+\.[0-9]+$' | tail -1 | tr -d ' ')
+    if [[ -z "$latest" ]]; then
+        echo "ERROR: Could not determine latest CPython version."
+        return 1
+    fi
+
+    echo "Installing CPython $latest..."
+    pyenv install --verbose "$latest"
+    pyenv global "$latest"
+    echo "CPython $latest installed and set as global default."
+}
+
 action_install_software() {
     while true; do
         echo ""
@@ -851,7 +873,8 @@ action_install_software() {
         echo "  6) Dropbox"
         echo "  7) Clojure"
         echo "  8) Python (pyenv)"
-        echo "  9) Remove Firefox & Thunderbird"
+        echo "  9) Python (latest CPython)"
+        echo " 10) Remove Firefox & Thunderbird"
         echo ""
         echo "  b) Back"
         echo ""
@@ -865,7 +888,8 @@ action_install_software() {
             6) action_install_dropbox ;;
             7) action_install_clojure ;;
             8) action_install_pyenv ;;
-            9) action_remove_firefox_thunderbird ;;
+            9) action_install_cpython_latest ;;
+            10) action_remove_firefox_thunderbird ;;
             b|B) return 0 ;;
             *) echo "Invalid selection: $choice" ;;
         esac
