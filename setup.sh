@@ -457,11 +457,15 @@ action_install_emacs() {
         echo "Emacs is already installed."
     fi
 
-    if [[ -e "$dst" ]]; then
-        echo "Skipping (already exists): $dst"
+    if [[ -L "$dst" && "$(readlink "$dst")" == "$src" ]]; then
+        echo "Already linked: $dst -> $src"
+    elif [[ -L "$dst" ]]; then
+        echo "ERROR: $dst is a symlink to a different target — remove it manually first."
+    elif [[ -e "$dst" ]]; then
+        echo "ERROR: $dst exists and is not a symlink — remove it manually first."
     else
-        cp -v "$src" "$dst"
-        echo "Done."
+        ln -sf "$src" "$dst"
+        echo "Linked: $dst -> $src"
     fi
 }
 
