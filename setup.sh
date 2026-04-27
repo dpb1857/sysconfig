@@ -332,21 +332,24 @@ action_customize_ui() {
 }
 
 action_link_dotfiles() {
-    local src="$SCRIPT_DIR/dot-files/dot-bash_aliases"
-    local dst="$HOME/.bash_aliases"
+    local pairs=(
+        "$SCRIPT_DIR/dot-files/dot-bash_aliases|$HOME/.bash_aliases"
+        "$SCRIPT_DIR/dot-files/dot-gitconfig|$HOME/.gitconfig"
+    )
 
-    if [[ -L "$dst" && "$(readlink "$dst")" == "$src" ]]; then
-        echo "Already linked: $dst -> $src"
-        return 0
-    fi
+    for pair in "${pairs[@]}"; do
+        local src="${pair%%|*}"
+        local dst="${pair##*|}"
 
-    if [[ -e "$dst" && ! -L "$dst" ]]; then
-        echo "ERROR: $dst exists and is not a symlink — remove it manually first."
-        return 1
-    fi
-
-    ln -sf "$src" "$dst"
-    echo "Linked: $dst -> $src"
+        if [[ -L "$dst" && "$(readlink "$dst")" == "$src" ]]; then
+            echo "Already linked: $dst -> $src"
+        elif [[ -e "$dst" && ! -L "$dst" ]]; then
+            echo "ERROR: $dst exists and is not a symlink — remove it manually first."
+        else
+            ln -sf "$src" "$dst"
+            echo "Linked: $dst -> $src"
+        fi
+    done
 }
 
 action_setup_private() {
@@ -460,14 +463,6 @@ action_install_emacs() {
 }
 
 action_pivot_github_origin() {
-    local gitconfig_src="$SCRIPT_DIR/dot-files/dot-gitconfig"
-    local gitconfig_dst="$HOME/.gitconfig"
-    if [[ -e "$gitconfig_dst" ]]; then
-        echo "Skipping (already exists): $gitconfig_dst"
-    else
-        cp -v "$gitconfig_src" "$gitconfig_dst"
-    fi
-
     local url
     if ! url=$(git remote get-url origin 2>/dev/null); then
         echo "ERROR: No 'origin' remote found in this git repository."
@@ -516,7 +511,7 @@ action_install_chrome() {
 
 action_install_system_utils() {
     echo "Installing system utilities..."
-    sudo apt install -y baobab btrfs-progs httpie gparted btop mg ripgrep
+    sudo apt install -y baobab httpie gparted btop mg ripgrep
 }
 
 action_install_office() {
@@ -807,30 +802,36 @@ action_remove_firefox_thunderbird() {
     echo "Firefox and Thunderbird removed."
 }
 
+action_install_filesystem_utils() {
+    sudo apt-get install -y ecryptfs-utils cryptsetup sshfs exfatprogs exfat-fuse nfs-common btrfs-progs
+}
+
 action_install_software() {
     while true; do
         echo ""
         echo "Add/Remove Software"
         echo ""
-        echo "  1) System Utils (baobab, btrfs-progs, httpie, gparted, btop, mg, ripgrep)"
-        echo "  2) Office (xournal)"
-        echo "  3) Media (ubuntu-restricted-extras, digikam, ffmpeg, gimp, gscan2pdf, vlc)"
-        echo "  4) Devtools (jq, make)"
-        echo "  5) Dropbox"
-        echo "  6) Clojure"
-        echo "  7) Remove Firefox & Thunderbird"
+        echo "  1) Filesystem Utils (ecryptfs-utils, cryptsetup, sshfs, exfatprogs, exfat-fuse, nfs-common, btrfs-progs)"
+        echo "  2) System Utils (baobab, httpie, gparted, btop, mg, ripgrep)"
+        echo "  3) Office (xournal)"
+        echo "  4) Media (ubuntu-restricted-extras, digikam, ffmpeg, gimp, gscan2pdf, vlc)"
+        echo "  5) Devtools (jq, make)"
+        echo "  6) Dropbox"
+        echo "  7) Clojure"
+        echo "  8) Remove Firefox & Thunderbird"
         echo ""
         echo "  b) Back"
         echo ""
         read -rp "Select: " choice
         case "$choice" in
-            1) action_install_system_utils ;;
-            2) action_install_office ;;
-            3) action_install_media ;;
-            4) action_install_devtools ;;
-            5) action_install_dropbox ;;
-            6) action_install_clojure ;;
-            7) action_remove_firefox_thunderbird ;;
+            1) action_install_filesystem_utils ;;
+            2) action_install_system_utils ;;
+            3) action_install_office ;;
+            4) action_install_media ;;
+            5) action_install_devtools ;;
+            6) action_install_dropbox ;;
+            7) action_install_clojure ;;
+            8) action_remove_firefox_thunderbird ;;
             b|B) return 0 ;;
             *) echo "Invalid selection: $choice" ;;
         esac
