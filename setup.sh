@@ -531,7 +531,7 @@ action_install_office() {
 
 action_install_media() {
     echo "Installing media software..."
-    sudo apt install -y ubuntu-restricted-extras digikam ffmpeg gimp gscan2pdf vlc
+    sudo apt install -y ubuntu-restricted-extras digikam exiftool ffmpeg gimp gscan2pdf vlc
 }
 
 action_install_devtools() {
