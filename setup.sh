@@ -1245,6 +1245,17 @@ action_configure_screensaver() {
     echo "Done."
 }
 
+# On thinkpad carbon x1 machines, commands are Alt-PrtSc-<KEY>
+# Useful keys: (wikipedia Magic Syrq key)
+#  b : reboot immediately
+#  k : kill all processes in current virtual console
+#  o : poweroff
+#
+# reisub was the traditional set of keys to shutdown a hung machine.
+#
+# See the Wikipedia page on Magic SysRq for lots more details.
+# https://en.wikipedia.org/wiki/Magic_SysRq_key
+
 action_enable_sysrq() {
     local conf="/etc/sysctl.d/99-sysrq.conf"
     if [[ -f "$conf" ]] && grep -q "^kernel.sysrq = 1" "$conf"; then
