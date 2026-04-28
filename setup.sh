@@ -811,6 +811,14 @@ action_remove_firefox_thunderbird() {
     echo "Firefox and Thunderbird removed."
 }
 
+action_checkout_bin_scripts() {
+    if [[ -e "$HOME/bin" ]]; then
+        echo "ERROR: $HOME/bin already exists — remove it manually first."
+        return 1
+    fi
+    (cd "$HOME" && git clone git@linode.donbennett.org:dpb-bin bin)
+}
+
 action_install_filesystem_utils() {
     sudo apt-get install -y ecryptfs-utils cryptsetup sshfs exfatprogs exfat-fuse nfs-common btrfs-progs
 }
@@ -893,6 +901,11 @@ action_install_nvm_node() {
     echo "nvm $nvm_version and Node.js installed."
 }
 
+action_remove_unattended_upgrades() {
+    sudo apt-get remove --purge -y unattended-upgrades
+    echo "unattended-upgrades removed."
+}
+
 action_install_zoom() {
     local tmp
     tmp=$(mktemp --suffix=.deb)
@@ -908,35 +921,39 @@ action_install_software() {
         echo ""
         echo "Add/Remove Software"
         echo ""
-        echo "  1) Filesystem Utils (ecryptfs-utils, cryptsetup, sshfs, exfatprogs, exfat-fuse, nfs-common, btrfs-progs)"
-        echo "  2) System Utils (baobab, httpie, gparted, btop, mg, ripgrep)"
-        echo "  3) Office (xournal)"
-        echo "  4) Media (ubuntu-restricted-extras, digikam, ffmpeg, gimp, gscan2pdf, vlc)"
-        echo "  5) Devtools (jq, make)"
-        echo "  6) Dropbox"
-        echo "  7) Install nvm & node"
-        echo "  8) Clojure"
-        echo "  9) Python (pyenv)"
-        echo " 10) Python (latest CPython)"
-        echo " 11) Zoom"
-        echo " 12) Remove Firefox & Thunderbird"
+        echo "  1) Checkout ~/bin scripts"
+        echo "  2) Filesystem Utils (ecryptfs-utils, cryptsetup, sshfs, exfatprogs, exfat-fuse, nfs-common, btrfs-progs)"
+        echo "  3) System Utils (baobab, httpie, gparted, btop, mg, ripgrep)"
+        echo "  4) Office (xournal)"
+        echo "  5) Media (ubuntu-restricted-extras, digikam, ffmpeg, gimp, gscan2pdf, vlc)"
+        echo "  6) Devtools (jq, make)"
+        echo "  7) Dropbox"
+        echo "  8) Install nvm & node"
+        echo "  9) Clojure"
+        echo " 10) Python (pyenv)"
+        echo " 11) Python (latest CPython)"
+        echo " 12) Zoom"
+        echo " 13) Remove Firefox & Thunderbird"
+        echo " 14) Remove unattended-upgrades"
         echo ""
         echo "  b) Back"
         echo ""
         read -rp "Select: " choice
         case "$choice" in
-            1) action_install_filesystem_utils ;;
-            2) action_install_system_utils ;;
-            3) action_install_office ;;
-            4) action_install_media ;;
-            5) action_install_devtools ;;
-            6) action_install_dropbox ;;
-            7) action_install_nvm_node ;;
-            8) action_install_clojure ;;
-            9) action_install_pyenv ;;
-            10) action_install_cpython_latest ;;
-            11) action_install_zoom ;;
-            12) action_remove_firefox_thunderbird ;;
+            1) action_checkout_bin_scripts ;;
+            2) action_install_filesystem_utils ;;
+            3) action_install_system_utils ;;
+            4) action_install_office ;;
+            5) action_install_media ;;
+            6) action_install_devtools ;;
+            7) action_install_dropbox ;;
+            8) action_install_nvm_node ;;
+            9) action_install_clojure ;;
+            10) action_install_pyenv ;;
+            11) action_install_cpython_latest ;;
+            12) action_install_zoom ;;
+            13) action_remove_firefox_thunderbird ;;
+            14) action_remove_unattended_upgrades ;;
             b|B) return 0 ;;
             *) echo "Invalid selection: $choice" ;;
         esac
