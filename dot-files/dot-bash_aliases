@@ -19,6 +19,7 @@ alias pyserve='python -m http.server 8080' # python3 module name
 alias rehash='export PATH=$PATH'
 alias uncd='cd $OLDPWD'
 alias scp='scp -c blowfish-cbc'
+alias ccc="EDITOR=mg claude --resume"
 
 ignoreeof=5
 
