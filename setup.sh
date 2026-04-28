@@ -1188,7 +1188,12 @@ action_power_management_changes() {
         echo "  ${key}=ignore"
     done
 
-    sudo systemctl restart systemd-logind
+    if [[ "$de" == *"GNOME"* ]]; then
+        echo "NOTE: Restarting systemd-logind would end your GNOME session."
+        echo "      Log out and back in for the lid-switch changes to take effect."
+    else
+        sudo systemctl restart systemd-logind
+    fi
     echo "Done."
 }
 
