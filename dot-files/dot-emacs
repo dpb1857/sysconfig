@@ -1,0 +1,335 @@
+;; -*- mode: emacs-lisp; -*-
+
+;; Don's gnuemacs profile file...
+;; File-Name: dpb-laptop:/home/dbennett/.emacs
+;; Last-Edit: Wed May 14 23:11:28 2008 by Don Bennett <dpb at dpb-laptop>
+;;
+
+;; TL/DR:
+;;
+;; Minibuffer keyprompts:
+;;     m-x which-key-mode
+;;         -> turn on completion prompts after prefix characters
+;;     m-x neotree
+;;         -> file browser in sidebar
+;;     m-x menu-bar-mode
+;;         -> turns on menu bar; useful sometimes with some modes
+;;
+;; Cider -
+;;
+;;    #################################
+;;    Launching a Clojure+CLJS  Project -
+;;    #################################
+;;    c-u c-x c j - Launch clojure cider buffer
+;;                  Add :dev to the launch command
+;;                  (go)
+;;                  # kit-watch.clj # launches shadow-cljs;
+;;                  ## load app in browser
+;;    c-x c-x c b - Cider connect - connect to browser via shadow nrepl server
+;;                  answers: localhost / 7002 / shadow / app
+;;
+;;    Other cider bindings -
+;;
+;;    c-u c-c c-z Switch between repl and clojure buffer; sets repl namespace
+;;    c-c c-c     Eval defun at point
+;;    c-u c-m-x   instrument for debugging
+;;    c-c c-k     Eval buffer
+;;    c-c c-o     cider-buffer-clear-output; one eval, or prefix c-u to clear all
+;;    c-c m-n m-r cider-ns-refresh - refresh namespace; https://docs.cider.mx/cider/usage/misc_features.html
+;;
+;;    My custom cider connect bindings;
+;;    c-x c j   cider-jack-in
+;;    c-x c b   cider-connect-cljs
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;    DEBUGGING
+;;    https://docs.cider.mx/cider/debugging/debugger.html
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;;    Inspector
+;;    c-c m-i cider-inspect - after form (c-u)top-level (c-u c-u)query
+;;
+;;    Profiler
+;;    c-c c-= n  cider-profile-ns-toggle  turn profile on/off
+;;    c-c c-= S  profile summary
+;;    c-c c-= c  clear profile data
+;;
+;;    Debugger - inline #break, #dbg
+;;
+;;    Function Tracing
+;;    c-c m-t v toggle function tracing
+;;    c-c m-t n toggle namespace tracing
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;;    Namespace Browser -
+;;    m-x cider-browse-ns
+;;    m-x cider-browse-ns-all
+;;
+;;    Namespace Operations
+;;    C-c M-n n cider-repl-set-ns ; change repl into current namespace
+;;
+;;
+;;    Documentation -
+;;    c-u c-c c-d  Display function docstring
+;;    c-u c-c c-c  Display full documentation
+
+;;    :cljs/quit  - exit the cljs repo when connected thru shadow
+;;    (shadow.cljs.devtools.api/repl :app) to rejoin the cljs repl
+;;       setup as logged by cider -
+;;       cljs repl init form: (do (require '[shadow.cljs.devtools.api :as shadow]) (shadow/watch :app) (shadow/nrepl-select :app))
+
+;;
+;; Paredit -
+;;    m-s     splice; unwrap and raise a level
+;;    c-right slurp
+;;
+;; Acejump -
+;;     [C-U] c-<backtick> <key> <selector>
+;;
+;; Indenting -
+;;     m-x iwb (indent whole buffer)
+;;
+;; Registers
+;;     c-x r x copy region to register
+;;     c-x r g insert register
+;;     c-x r <spc> copy point to register
+;;     c-x r j jump to register location
+;;
+;; Bookmarks -
+;;     C-x x m  - bookmark current file
+;;     C-x j j  - jump to bookmark
+;;     C-x r l  - list / edit bookmarks
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Path configuration;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(setq load-path
+      (append (list
+               (concat (getenv "HOME") "/sysconfig/elisp")
+               (concat (getenv "HOME") "/elisp")
+               "/usr/local/share/emacs/site-lisp"
+               ;; (concat (getenv "HOME") "/elisp/git-emacs")
+               ;; (concat (getenv "HOME") "/elisp/gitsum")
+               ;; "/usr/share/doc/git-core/contrib/emacs"
+               ;; "/opt/jde/lisp"
+               )
+              load-path))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Package managers are good;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(require 'package)
+(add-to-list 'package-archives
+             '("melpa-stable" . "https://stable.melpa.org/packages/"))
+
+;; fix
+;; (add-to-list 'package-pinned-packages '(cider . "melpa-stable") t)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; seup various don packages
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(package-initialize)
+
+;; languages
+
+(require 'dpb-flycheck) ;; Must come before some lang modes that tweak checkers;
+
+(require 'dpb-cc-mode-setup)
+(require 'dpb-clj)
+(require 'dpb-golang)
+(require 'dpb-groovy-mode)
+(require 'dpb-javascript)
+(require 'dpb-python)
+;; (require 'hy-mode) ;; lisp on a python interpreter!
+
+;; devtools
+
+;; Docker tries to pull in tablist pagkage which can't be found; :-(
+;; (require 'dpb-docker)
+;; (require 'dpb-docker-tramp)
+(require 'dpb-neotree)
+(global-set-key "\C-ce" 'neotree)
+
+(require 'vi-paren-matching)
+(show-paren-mode t)
+
+;; modes
+
+(require 'dpb-orgmode)
+
+;; features
+
+(require 'dpb-acejump)
+(require 'dpb-enable-features)
+(require 'dpb-position-info)
+(require 'dpb-rg) ;; ripgrep
+(require 'dpb-smooth)
+(require 'dpb-truncate-toggle)
+(require 'dpb-verify-exit)
+(require 'dpb-which-key)
+
+(require 'iwb) ;; indent-whole-buffer
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Turn Ido mode
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(require 'ido)
+(setq ido-enable-flex-matching nil)
+(setq ido-show-dot-for-dired t)
+;; (setq ido-everywhere t) ;; why?
+(ido-mode t)
+
+;; disable a search for file in other dirs when you want to create a new one;
+;; https://stackoverflow.com/questions/17986194/emacs-disable-automatic-file-search-in-ido-mode
+(setq ido-auto-merge-work-directories-length -1)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; shell-mode tweaking; necessary for mac & chromebook
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;(if (string-equal system-type "darwin")
+(setq explicit-bash-args (quote ("--noediting" "-i" "-l")))
+;; )
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; magit
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(unless (package-installed-p 'magit)
+  (package-refresh-contents)
+  (package-install 'magit))
+
+(global-set-key "\^xm" 'magit-status)
+
+;; Also useful if you're switching branches a lot;
+(global-auto-revert-mode)
+(setq magit-last-seen-setup-instructions "1.4.0")
+
+;;;;;;;;;;;;;;;;;;;;
+;; postgres;
+;;;;;;;;;;;;;;;;;;;;
+
+;; postgres - connecting to a non-default port using sql-postgres:
+;; (setq sql-postgres-options '("-P" "pager=off" "-p" "32497")
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; browse-kill-ring
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(unless (package-installed-p 'browse-kill-ring)
+  (package-refresh-contents)
+  (package-install 'browse-kill-ring))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; The usual emacsclient server;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; (server-start)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; markdown;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(unless (package-installed-p 'markdown-mode)
+  (package-refresh-contents)
+  (package-install 'markdown-mode))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; bookmark plus;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Hacked!!
+;; (require 'dpb-bookmarksplus)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Misc settings
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(setq-default indent-tabs-mode nil)
+
+(add-hook 'before-save-hook 'delete-trailing-whitespace)
+
+(setenv "PAGER") ;; for subshells and ipython;
+
+;; Try to control window splitting;
+(setq split-width-threshold 250)
+
+;; Disable toolbar
+(tool-bar-mode -1)
+
+;; Disable menubar
+(menu-bar-mode -1)
+
+;; Disable the mac tab bar;
+;; (mac-toggle-tab-bar)
+
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(bmkp-last-as-first-bookmark-file "/home/dpb/.emacs.d/bookmarks")
+ '(inhibit-startup-screen t)
+ '(org-agenda-custom-commands
+   '(("d" todo "DELEGATED" nil)
+     ("c" todo "DONE|DEFERRED|CANCELLED" nil)
+     ("w" todo "WAITING" nil)
+     ("W" agenda ""
+      ((org-agenda-ndays 21)))
+     ("A" agenda ""
+      ((org-agenda-skip-function
+        (lambda nil
+          (org-agenda-skip-entry-if 'notregexp "\\=.*\\[#A\\]")))
+       (org-agenda-ndays 1)
+       (org-agenda-overriding-header "Today's Priority #A tasks: ")))
+     ("u" alltodo ""
+      ((org-agenda-skip-function
+        (lambda nil
+          (org-agenda-skip-entry-if 'scheduled 'deadline 'regexp "<[^>\12]+>")))
+       (org-agenda-overriding-header "Unscheduled TODO entries: ")))))
+ '(org-agenda-ndays 7)
+ '(org-agenda-show-all-dates t)
+ '(org-agenda-skip-deadline-if-done t)
+ '(org-agenda-skip-scheduled-if-done t)
+ '(org-agenda-start-on-weekday nil)
+ '(org-deadline-warning-days 14)
+ '(org-default-notes-file "~/org/notes.org")
+ '(org-fast-tag-selection-single-key 'expert)
+ '(org-remember-store-without-prompt t)
+ '(org-remember-templates
+   '((116 "* TODO %?\12  %u" "~/org/todo.org" "Tasks")
+     (110 "* %u %?" "~/org/notes.org" "Notes")))
+ '(org-reverse-note-order t)
+ '(package-selected-packages
+   '(cell-mode fzf rg which-key vagrant-tramp markdown-mode browse-kill-ring ace-jump-mode sublimity smooth-scrolling scala-mode2 magit cider clojure-mode go-mode))
+ '(remember-annotation-functions '(org-remember-annotation))
+ '(remember-handler-functions '(org-remember-handler))
+ '(safe-local-variable-values '((py-indent-offset . 4)))
+ '(show-paren-mode t)
+ '(tool-bar-mode nil)
+ '(warning-suppress-log-types '((comp))))
+
+;; This was causing really tiny fonts in windows;
+;; (set-face-attribute 'default nil :height 80)
+
+(put 'scroll-left 'disabled nil)
+
+(if (not (string-equal system-type "darwin"))
+    (custom-set-faces
+     ;; custom-set-faces was added by Custom.
+     ;; If you edit it by hand, you could mess it up, so be careful.
+     ;; Your init file should contain only one such instance.
+     ;; If there is more than one, they won't work right.
+     '(default ((t (:family "DejaVu Sans Mono" :foundry "PfEd" :slant normal :weight normal :height 79 :width normal))))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(default ((t (:family "DejaVu Sans Mono" :foundry "PfEd" :slant normal :weight normal :height 79 :width normal)))))

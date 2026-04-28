@@ -1,0 +1,174 @@
+# -*- mode: shell-script; -*-
+
+echo "Sourcing dot-bashrc_aliases... "
+
+export LOADED_DOT_BASH_ALIASES=1
+
+unalias ls 2> /dev/null
+alias ls='ls -F'
+
+alias again='LEFTP=""; RIGHTP=""; source ~/.bashrc'
+
+# https://askubuntu.com/questions/504240/how-to-change-the-caret-of-the-gnome-terminal
+alias cursor="echo -ne '\e[0 q'"
+
+alias d='export d=`pwd` && echo "setting environment variable d to $d"'
+alias dirs='echo $(builtin dirs) [$OLDPWD]'
+alias goto='cd `/bin/pwd`'
+alias pyserve='python -m http.server 8080' # python3 module name
+alias rehash='export PATH=$PATH'
+alias uncd='cd $OLDPWD'
+alias scp='scp -c blowfish-cbc'
+alias cc="EDITOR=mg claude --resume"
+
+ignoreeof=5
+
+if [ "$LOGNAME" = root ]; then
+    LEFTP="{"${LEFTP}
+    RIGHTP=${RIGHTP}"}"
+    key='#'
+else
+    LEFTP="["${LEFTP}
+    RIGHTP=${RIGHTP}"]"
+    key='%'
+fi
+
+PS1="${LEFTP}${LOGNAME}@${HOSTNAME}${RIGHTP} \#${key} "
+
+function dt() {
+    if [ -f /tmp/dir.txt ]; then
+        export d=`cat /tmp/dir.txt`
+        rm -f /tmp/dir.txt
+	echo "Set environment variable d to $d ."
+    else
+	curdir=`/bin/pwd`
+        echo $curdir > /tmp/dir.txt
+	echo "Stored $curdir in /tmp/dir.txt ."
+    fi
+}
+
+function adddot () {
+    export PATH=".:$PATH"
+}
+
+function addphotos() {
+    if ! echo $PATH | grep synced/bin/photos > /dev/null; then
+        export PATH="$HOME/synced/bin/photos:$PATH"
+    fi
+    echo "photo command notes -"
+    cat $HOME/synced/bin/photos/README.txt
+}
+
+function ediff () {
+    emacs --eval "(ediff \"$1\" \"$2\")"
+}
+
+function rot13() {
+    tr n-za-mN-ZA-M a-zA-Z
+}
+
+function encdocs() {
+    if [ ! -d $HOME/encdocs ]; then
+        mkdir $HOME/encdocs
+    fi
+    DOCS_DIR="$HOME/Dropbox/EncDocs"
+    sudo mount -t ecryptfs -o key=passphrase $DOCS_DIR $HOME/encdocs
+    chmod 700 $HOME/encdocs
+}
+
+function unencdocs() {
+    sudo umount $HOME/encdocs
+    rmdir $HOME/encdocs
+}
+
+function encjobs() {
+    if [ ! -d $HOME/jobsenc ]; then
+        mkdir $HOME/jobsenc
+    fi
+    JOBS_DIR="$HOME/Dropbox/Jobs/enc"
+    sudo mount -t ecryptfs -o key=passphrase $JOBS_DIR $HOME/jobsenc
+    chmod 700 $HOME/jobsenc
+}
+
+function unencjobs() {
+    sudo umount $HOME/jobsenc
+    rmdir $HOME/jobsenc
+}
+
+function finance() {
+    if [ ! -d $HOME/Dropbox/Finance ]; then
+        echo "Dropbox/Finance not found." 1>&2
+        return 1
+    fi
+    if mount | grep -q $HOME/finance; then
+        echo "Finance directory already mounted" 1>&2
+        return 1
+    fi
+    if [ ! -d $HOME/finance ]; then
+        mkdir $HOME/finance
+    fi
+    echo "Mounting finance dir read-only"
+    sudo mount -t ecryptfs -o key=passphrase -r $HOME/Dropbox/Finance $HOME/finance
+}
+
+function finance-rw() {
+    if [ ! -d $HOME/Dropbox/Finance ]; then
+        echo "Dropbox/Finance not found." 1>&2
+        return 1
+    fi
+    if [ ! -d $HOME/finance ]; then
+        mkdir $HOME/finance
+    fi
+    sudo mount -t ecryptfs -o key=passphrase $HOME/Dropbox/Finance $HOME/finance
+}
+
+function unfinance() {
+    if [ -d $HOME/finance ]; then
+        sudo umount $HOME/finance
+        rmdir $HOME/finance
+    fi
+}
+
+function vc() {
+    if [ ! -d /mnt/vc ]; then
+        sudo mkdir /mnt/vc
+    fi
+    device=`sudo losetup -f $HOME/Dropbox/Legacy/vcdata --show`
+    sudo cryptsetup luksOpen $device vc
+    sudo mount /dev/mapper/vc /mnt/vc
+    echo $device > /tmp/vcloop
+}
+
+function unvc() {
+    sudo umount /mnt/vc
+    sudo rmdir /mnt/vc
+    sudo cryptsetup luksClose vc
+    if [ -f /tmp/vcloop ]; then
+        sudo losetup -d `cat /tmp/vcloop`
+        rm -f /tmp/vcloop
+    fi
+}
+
+function stuff() {
+    if [ ! -d /mnt/stuff ]; then
+        sudo mkdir /mnt/stuff
+    fi
+    device=`sudo losetup -f $HOME/Dropbox/Legacy/stuff --show`
+    sudo cryptsetup luksOpen $device stuff
+    sudo mount /dev/mapper/stuff /mnt/stuff
+    echo $device > /tmp/stuffloop
+}
+
+function unstuff() {
+    sudo umount /mnt/stuff
+    sudo rmdir /mnt/stuff
+    sudo cryptsetup luksClose stuff
+    if [ -f /tmp/stuffloop ]; then
+        sudo losetup -d `cat /tmp/stuffloop`
+        rm -f /tmp/stuffloop
+    fi
+}
+
+
+
+echo "dot-bashrc_aliases Done."
