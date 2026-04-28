@@ -907,6 +907,12 @@ action_install_nvm_node() {
     echo "nvm $nvm_version and Node.js installed."
 }
 
+action_install_obs() {
+    sudo add-apt-repository ppa:obsproject/obs-studio
+    sudo apt update
+    sudo apt install -y obs-studio
+}
+
 action_remove_unattended_upgrades() {
     sudo apt-get remove --purge -y unattended-upgrades
     echo "unattended-upgrades removed."
@@ -945,8 +951,9 @@ action_install_software() {
         echo " 11) Python (pyenv)"
         echo " 12) Python (latest CPython)"
         echo " 13) Zoom"
-        echo " 14) Remove Firefox & Thunderbird"
-        echo " 15) Remove unattended-upgrades"
+        echo " 14) OBS"
+        echo " 15) Remove Firefox & Thunderbird"
+        echo " 16) Remove unattended-upgrades"
         echo ""
         echo "  b) Back"
         echo ""
@@ -965,8 +972,9 @@ action_install_software() {
             11) action_install_pyenv ;;
             12) action_install_cpython_latest ;;
             13) action_install_zoom ;;
-            14) action_remove_firefox_thunderbird ;;
-            15) action_remove_unattended_upgrades ;;
+            14) action_install_obs ;;
+            15) action_remove_firefox_thunderbird ;;
+            16) action_remove_unattended_upgrades ;;
             b|B) return 0 ;;
             *) echo "Invalid selection: $choice" ;;
         esac
