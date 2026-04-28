@@ -547,30 +547,36 @@ action_install_clojure_java() {
         echo "Installing rlwrap (required for Clojure)..."
         sudo apt install -y rlwrap
     fi
+    local tmp_dir
+    tmp_dir=$(mktemp -d)
+    trap 'rm -rf "$tmp_dir"' RETURN
     echo "Downloading Clojure installer..."
-    curl -L -O https://github.com/clojure/brew-install/releases/latest/download/linux-install.sh
-    chmod +x linux-install.sh
+    curl -L -o "$tmp_dir/linux-install.sh" https://github.com/clojure/brew-install/releases/latest/download/linux-install.sh
+    chmod +x "$tmp_dir/linux-install.sh"
     echo "Installing Clojure..."
-    sudo ./linux-install.sh
-    rm linux-install.sh
+    sudo "$tmp_dir/linux-install.sh"
 }
 
 action_install_clj_kondo() {
+    local tmp_dir
+    tmp_dir=$(mktemp -d)
+    trap 'rm -rf "$tmp_dir"' RETURN
     echo "Downloading clj-kondo installer..."
-    curl -sLO https://raw.githubusercontent.com/clj-kondo/clj-kondo/master/script/install-clj-kondo
-    chmod +x install-clj-kondo
+    curl -sL -o "$tmp_dir/install-clj-kondo" https://raw.githubusercontent.com/clj-kondo/clj-kondo/master/script/install-clj-kondo
+    chmod +x "$tmp_dir/install-clj-kondo"
     echo "Installing clj-kondo..."
-    sudo ./install-clj-kondo
-    rm install-clj-kondo
+    sudo "$tmp_dir/install-clj-kondo"
 }
 
 action_install_babashka() {
+    local tmp_dir
+    tmp_dir=$(mktemp -d)
+    trap 'rm -rf "$tmp_dir"' RETURN
     echo "Downloading babashka installer..."
-    curl -sLO https://raw.githubusercontent.com/babashka/babashka/master/install
-    chmod +x install
+    curl -sL -o "$tmp_dir/install" https://raw.githubusercontent.com/babashka/babashka/master/install
+    chmod +x "$tmp_dir/install"
     echo "Installing babashka..."
-    sudo ./install
-    rm install
+    sudo "$tmp_dir/install"
 }
 
 action_install_dropbox_unpack() {
@@ -906,6 +912,11 @@ action_remove_unattended_upgrades() {
     echo "unattended-upgrades removed."
 }
 
+action_install_handbrake() {
+    sudo apt install -y libdvdcss2 handbrake
+    sudo dpkg-reconfigure libdvd-pkg
+}
+
 action_install_zoom() {
     local tmp
     tmp=$(mktemp --suffix=.deb)
@@ -926,15 +937,16 @@ action_install_software() {
         echo "  3) System Utils (baobab, httpie, gparted, btop, mg, ripgrep)"
         echo "  4) Office (xournal)"
         echo "  5) Media (ubuntu-restricted-extras, digikam, ffmpeg, gimp, gscan2pdf, vlc)"
-        echo "  6) Devtools (jq, make)"
-        echo "  7) Dropbox"
-        echo "  8) Install nvm & node"
-        echo "  9) Clojure"
-        echo " 10) Python (pyenv)"
-        echo " 11) Python (latest CPython)"
-        echo " 12) Zoom"
-        echo " 13) Remove Firefox & Thunderbird"
-        echo " 14) Remove unattended-upgrades"
+        echo "  6) Handbrake"
+        echo "  7) Devtools (jq, make)"
+        echo "  8) Dropbox"
+        echo "  9) Install nvm & node"
+        echo " 10) Clojure"
+        echo " 11) Python (pyenv)"
+        echo " 12) Python (latest CPython)"
+        echo " 13) Zoom"
+        echo " 14) Remove Firefox & Thunderbird"
+        echo " 15) Remove unattended-upgrades"
         echo ""
         echo "  b) Back"
         echo ""
@@ -945,15 +957,16 @@ action_install_software() {
             3) action_install_system_utils ;;
             4) action_install_office ;;
             5) action_install_media ;;
-            6) action_install_devtools ;;
-            7) action_install_dropbox ;;
-            8) action_install_nvm_node ;;
-            9) action_install_clojure ;;
-            10) action_install_pyenv ;;
-            11) action_install_cpython_latest ;;
-            12) action_install_zoom ;;
-            13) action_remove_firefox_thunderbird ;;
-            14) action_remove_unattended_upgrades ;;
+            6) action_install_handbrake ;;
+            7) action_install_devtools ;;
+            8) action_install_dropbox ;;
+            9) action_install_nvm_node ;;
+            10) action_install_clojure ;;
+            11) action_install_pyenv ;;
+            12) action_install_cpython_latest ;;
+            13) action_install_zoom ;;
+            14) action_remove_firefox_thunderbird ;;
+            15) action_remove_unattended_upgrades ;;
             b|B) return 0 ;;
             *) echo "Invalid selection: $choice" ;;
         esac
@@ -1020,8 +1033,10 @@ action_hibernate_configure_grub() {
         return 0
     fi
 
-    sudo cp "$grub_file" "${grub_file}.bak"
-    echo "Backed up $grub_file to ${grub_file}.bak"
+    if [[ ! -f "${grub_file}.bak" ]]; then
+        sudo cp "$grub_file" "${grub_file}.bak"
+        echo "Backed up $grub_file to ${grub_file}.bak"
+    fi
 
     if grep -q "resume=" "$grub_file"; then
         sudo sed -i "s|resume=[^[:space:]\"]*|$resume_param|g" "$grub_file"
@@ -1159,8 +1174,10 @@ action_power_management_changes() {
     fi
 
     echo "Applying /etc/systemd/logind.conf settings..."
-    sudo cp "$logind_conf" "${logind_conf}.bak"
-    echo "Backed up $logind_conf to ${logind_conf}.bak"
+    if [[ ! -f "${logind_conf}.bak" ]]; then
+        sudo cp "$logind_conf" "${logind_conf}.bak"
+        echo "Backed up $logind_conf to ${logind_conf}.bak"
+    fi
 
     for key in HandleLidSwitch HandleLidSwitchOnBattery; do
         if grep -qE "^#?${key}=" "$logind_conf"; then
@@ -1203,7 +1220,7 @@ action_hibernation_submenu() {
 
 action_configure_screensaver() {
     local de="${XDG_CURRENT_DESKTOP:-}"
-    if [[ "$de" != *"Cinnamon"* ]]; then
+    if [[ "$de" != *"X-Cinnamon"* && "$de" != *"CINNAMON"* ]]; then
         echo "Warning: screensaver configuration requires Cinnamon (current desktop: ${de:-unknown})"
         return
     fi
@@ -1264,11 +1281,11 @@ action_sleep_hibernation() {
 
 MENU_ITEMS=(
     "Install Claude Code"
-    "Local Symlinks (dotfiles, \$HOME/bin)"
+    "Local Symlinks (dotfiles)"
     "Setup private directory (ecryptfs-setup-private)"
     "Setup SSH keys (copy, decrypt, fix permissions)"
     "Pivot GitHub origin URL to SSH (git@github.com)"
-    "Install Emacs (copy dot-emacs)"
+    "Install Emacs (symlink dot-emacs)"
     "Install Google Chrome"
     "Customize UI"
     "Add/Remove Software"
