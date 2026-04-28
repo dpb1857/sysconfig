@@ -335,7 +335,6 @@ action_local_symlinks() {
     local pairs=(
         "$SCRIPT_DIR/dot-files/dot-bash_aliases|$HOME/.bash_aliases"
         "$SCRIPT_DIR/dot-files/dot-gitconfig|$HOME/.gitconfig"
-        "$SCRIPT_DIR/bin|$HOME/bin"
     )
 
     for pair in "${pairs[@]}"; do
