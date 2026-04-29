@@ -749,7 +749,7 @@ action_dell_printer_install_prereqs() {
 }
 
 action_dell_printer_install_driver() {
-    local pkg="$SCRIPT_DIR/packages/xerox-phaser-6000-6010_1.0-1_i386.deb"
+    local pkg="$SCRIPT_DIR/debs/xerox-phaser-6000-6010_1.0-1_i386.deb"
     echo "Installing printer driver: $(basename "$pkg")..."
     sudo dpkg -i "$pkg"
     echo "Done."
@@ -782,7 +782,7 @@ action_dell_printer_support() {
         echo ""
         echo "Dell Printer Support"
         echo ""
-        echo "  1) Install prerequisite packages"
+        echo "  1) Install prerequisite deb"
         echo "  2) Install printer driver"
         echo "  3) Configure printer"
         echo ""
