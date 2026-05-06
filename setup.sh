@@ -8,6 +8,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Actions — add a function here and a matching entry in MENU_ITEMS/MENU_FNS
 # ---------------------------------------------------------------------------
 
+# TODO: Consider also pulling in some other support stuff.
+# https://github.com/forrestchang/andrej-karpathy-skills#Install
+
+
 
 action_install_claude() {
     if ! command -v curl &>/dev/null; then
@@ -528,6 +532,9 @@ action_install_office() {
     sudo apt install -y xournal
 }
 
+# TODO: Video editors:
+# OpenShot; (used to use this)
+# KDEnlive; current popular powerful choice
 action_install_media() {
     echo "Installing media software..."
     sudo apt install -y ubuntu-restricted-extras digikam exiftool ffmpeg gimp gscan2pdf vlc
@@ -825,8 +832,9 @@ action_checkout_bin_scripts() {
     (cd "$HOME" && git clone git@linode.donbennett.org:dpb-bin bin)
 }
 
+# libfuse2 used by joplin
 action_install_filesystem_utils() {
-    sudo apt-get install -y ecryptfs-utils cryptsetup sshfs exfatprogs exfat-fuse nfs-common btrfs-progs
+    sudo apt-get install -y ecryptfs-utils cryptsetup sshfs exfatprogs exfat-fuse nfs-common btrfs-progs libfuse2
 }
 
 action_install_pyenv() {
@@ -932,6 +940,10 @@ action_install_zoom() {
     rm -f "$tmp"
     echo "Zoom installed."
 }
+
+# TODO: consider installing -
+# Joplin
+# Obsidian
 
 action_install_software() {
     while true; do
