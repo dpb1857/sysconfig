@@ -889,6 +889,7 @@ action_checkout_bin_scripts() {
         return 1
     fi
     (cd "$HOME" && git clone git@linode.donbennett.org:dpb-bin bin)
+    (cd "$HOME" && ln -s ../sysconfig/setup.sh bin)
 }
 
 # libfuse2 used by joplin
