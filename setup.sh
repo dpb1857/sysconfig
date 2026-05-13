@@ -106,6 +106,34 @@ action_cinnamon_set_emacs_launcher() {
     echo "Ctrl+Super+X bound to emacs (slot $key)."
 }
 
+action_cinnamon_set_bookmarks_launcher() {
+    local schema="org.cinnamon.desktop.keybindings"
+    local base_path="/org/cinnamon/desktop/keybindings/custom-keybindings"
+
+    local raw_list
+    raw_list=$(gsettings get "$schema" custom-list 2>/dev/null)
+
+    # Find next free slot
+    local slot=0
+    while [[ "$raw_list" == *"custom$slot"* ]]; do
+        slot=$((slot + 1))
+    done
+    local key="custom$slot"
+    local path="$base_path/$key/"
+
+    gsettings set "org.cinnamon.desktop.keybindings.custom-keybinding:$path" name "Launch Bookmarks"
+    gsettings set "org.cinnamon.desktop.keybindings.custom-keybinding:$path" command 'bash -ic "cd $HOME && exec /usr/local/bin/bookmarks"'
+    gsettings set "org.cinnamon.desktop.keybindings.custom-keybinding:$path" binding "['<Primary><Super>b']"
+
+    if [[ "$raw_list" == "@as []" || "$raw_list" == "[]" ]]; then
+        gsettings set "$schema" custom-list "['$key']"
+    else
+        gsettings set "$schema" custom-list "${raw_list%]}, '$key']"
+    fi
+
+    echo "Ctrl+Super+B bound to bookmarks (slot $key)."
+}
+
 action_cinnamon_set_suspend_shortcut() {
     gsettings set org.cinnamon.desktop.keybindings.media-keys suspend "['<Primary><Super>z']"
     echo "Ctrl+Super+Z bound to suspend."
@@ -158,11 +186,12 @@ action_cinnamon_ui() {
         echo "  1) Set Super+Return to launch terminal"
         echo "  2) Set Ctrl+Super+C to launch browser"
         echo "  3) Set Ctrl+Super+X to launch emacs"
-        echo "  4) Bind Ctrl+Super+Z to suspend"
-        echo "  5) Bind Ctrl+Super+L to lock screen"
-        echo "  6) Set text scaling factor to 1.2"
-        echo "  7) Enable panel auto-hide (show: 500ms, hide: 250ms)"
-        echo "  8) Configure workspaces (6 static; Super+F1-F6 to switch, Shift+F1-F6 to move)"
+        echo "  4) Set Ctrl+Super+B to launch bookmarks"
+        echo "  5) Bind Ctrl+Super+Z to suspend"
+        echo "  6) Bind Ctrl+Super+L to lock screen"
+        echo "  7) Set text scaling factor to 1.2"
+        echo "  8) Enable panel auto-hide (show: 500ms, hide: 250ms)"
+        echo "  9) Configure workspaces (6 static; Super+F1-F6 to switch, Shift+F1-F6 to move)"
         echo ""
         echo "  b) Back"
         echo ""
@@ -171,11 +200,12 @@ action_cinnamon_ui() {
             1) action_cinnamon_set_terminal_launcher ;;
             2) action_cinnamon_set_browser_launcher ;;
             3) action_cinnamon_set_emacs_launcher ;;
-            4) action_cinnamon_set_suspend_shortcut ;;
-            5) action_cinnamon_set_lock_shortcut ;;
-            6) action_cinnamon_set_text_scaling ;;
-            7) action_cinnamon_set_panel_autohide ;;
-            8) action_cinnamon_set_workspace_keybindings ;;
+            4) action_cinnamon_set_bookmarks_launcher ;;
+            5) action_cinnamon_set_suspend_shortcut ;;
+            6) action_cinnamon_set_lock_shortcut ;;
+            7) action_cinnamon_set_text_scaling ;;
+            8) action_cinnamon_set_panel_autohide ;;
+            9) action_cinnamon_set_workspace_keybindings ;;
             b|B) return 0 ;;
             *) echo "Invalid selection: $choice" ;;
         esac
@@ -241,6 +271,33 @@ action_gnome50_set_emacs_launcher() {
     echo "Ctrl+Super+X bound to emacs (slot $key)."
 }
 
+action_gnome50_set_bookmarks_launcher() {
+    local schema="org.gnome.settings-daemon.plugins.media-keys"
+    local base_path="/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings"
+
+    local raw_list
+    raw_list=$(gsettings get "$schema" custom-keybindings 2>/dev/null)
+
+    local slot=0
+    while [[ "$raw_list" == *"custom$slot"* ]]; do
+        slot=$((slot + 1))
+    done
+    local key="custom$slot"
+    local path="$base_path/$key/"
+
+    gsettings set "org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$path" name "Launch Bookmarks"
+    gsettings set "org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$path" command 'bash -ic "cd $HOME && exec /usr/local/bin/bookmarks"'
+    gsettings set "org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$path" binding "<Primary><Super>b"
+
+    if [[ "$raw_list" == "@as []" || "$raw_list" == "[]" ]]; then
+        gsettings set "$schema" custom-keybindings "['$path']"
+    else
+        gsettings set "$schema" custom-keybindings "${raw_list%]}, '$path']"
+    fi
+
+    echo "Ctrl+Super+X bound to bookmarks (slot $key)."
+}
+
 action_gnome50_set_suspend_shortcut() {
     gsettings set org.gnome.settings-daemon.plugins.media-keys suspend "['<Primary><Super>z']"
     echo "Ctrl+Super+Z bound to suspend."
@@ -280,9 +337,10 @@ action_gnome50_ui() {
         echo "  1) Set Super+Return to launch terminal"
         echo "  2) Set Ctrl+Super+C to launch browser"
         echo "  3) Set Ctrl+Super+X to launch emacs"
-        echo "  4) Bind Ctrl+Super+Z to suspend"
-        echo "  5) Bind Ctrl+Super+L to lock screen"
-        echo "  6) Configure workspaces (6 static; Super+F1-F6 to switch, Shift+F1-F6 to move)"
+        echo "  4) Set Ctrl+Super+B to launch bookmarks"
+        echo "  5) Bind Ctrl+Super+Z to suspend"
+        echo "  6) Bind Ctrl+Super+L to lock screen"
+        echo "  7) Configure workspaces (6 static; Super+F1-F6 to switch, Shift+F1-F6 to move)"
         echo ""
         echo "  b) Back"
         echo ""
@@ -291,9 +349,10 @@ action_gnome50_ui() {
             1) action_gnome50_set_terminal_launcher ;;
             2) action_gnome50_set_browser_launcher ;;
             3) action_gnome50_set_emacs_launcher ;;
-            4) action_gnome50_set_suspend_shortcut ;;
-            5) action_gnome50_set_lock_shortcut ;;
-            6) action_gnome50_set_workspace_keybindings ;;
+            4) action_gnome50_set_bookmarks_launcher ;;
+            5) action_gnome50_set_suspend_shortcut ;;
+            6) action_gnome50_set_lock_shortcut ;;
+            7) action_gnome50_set_workspace_keybindings ;;
             b|B) return 0 ;;
             *) echo "Invalid selection: $choice" ;;
         esac
@@ -1323,7 +1382,7 @@ MENU_ITEMS=(
     "Pivot GitHub origin URL to SSH (git@github.com)"
     "Install Emacs (symlink dot-emacs)"
     "Install Google Chrome"
-    "Customize UI"
+    "Customize UI (Cinnamon or Gnome50)"
     "Add/Remove Software"
     "Dell Printer Support"
     "Sleep / Hibernation / SysRq"
