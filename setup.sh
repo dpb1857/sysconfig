@@ -601,7 +601,7 @@ action_install_media() {
 
 action_install_devtools() {
     echo "Installing dev tools..."
-    sudo apt install -y jq make
+    sudo apt install -y jq make sqlite3
 }
 
 action_install_clojure_java() {
@@ -1016,7 +1016,7 @@ action_install_software() {
         echo "  4) Office (xournal)"
         echo "  5) Media (ubuntu-restricted-extras, digikam, ffmpeg, gimp, gscan2pdf, vlc)"
         echo "  6) Handbrake"
-        echo "  7) Devtools (jq, make)"
+        echo "  7) Devtools (jq, make, sqlite3)"
         echo "  8) Dropbox"
         echo "  9) Install nvm & node"
         echo " 10) Clojure"
