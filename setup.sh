@@ -986,6 +986,31 @@ action_remove_unattended_upgrades() {
     echo "unattended-upgrades removed."
 }
 
+action_add_sudoers_mount() {
+    local sudoers_file="/etc/sudoers.d/dpb-mount"
+    local rule="dpb ALL=(ALL) NOPASSWD: /usr/bin/mount, /usr/bin/umount"
+
+    if [[ -f "$sudoers_file" ]] && grep -qF "$rule" "$sudoers_file"; then
+        echo "Rule already present in $sudoers_file."
+        return 0
+    fi
+
+    local tmp
+    tmp=$(mktemp)
+    echo "$rule" > "$tmp"
+
+    if ! visudo -c -f "$tmp" &>/dev/null; then
+        echo "ERROR: sudoers syntax check failed."
+        rm -f "$tmp"
+        return 1
+    fi
+
+    sudo install -m 440 -o root -g root "$tmp" "$sudoers_file"
+    rm -f "$tmp"
+    echo "Written: $sudoers_file"
+    echo "  $rule"
+}
+
 action_install_handbrake() {
     sudo apt install -y libdvdcss2 handbrake
     sudo dpkg-reconfigure libdvd-pkg
@@ -1012,20 +1037,21 @@ action_install_software() {
         echo ""
         echo "  1) Checkout ~/bin scripts"
         echo "  2) Filesystem Utils (ecryptfs-utils, cryptsetup, sshfs, exfatprogs, exfat-fuse, nfs-common, btrfs-progs)"
-        echo "  3) System Utils (baobab, httpie, gparted, btop, mg, ripgrep)"
-        echo "  4) Office (xournal)"
-        echo "  5) Media (ubuntu-restricted-extras, digikam, ffmpeg, gimp, gscan2pdf, vlc)"
-        echo "  6) Handbrake"
-        echo "  7) Devtools (jq, make, sqlite3)"
-        echo "  8) Dropbox"
-        echo "  9) Install nvm & node"
-        echo " 10) Clojure"
-        echo " 11) Python (pyenv)"
-        echo " 12) Python (latest CPython)"
-        echo " 13) Zoom"
-        echo " 14) OBS"
-        echo " 15) Remove Firefox & Thunderbird"
-        echo " 16) Remove unattended-upgrades"
+        echo "  3) Add sudoers rule: dpb can run mount and unmount without a password"
+        echo "  4) System Utils (baobab, httpie, gparted, btop, mg, ripgrep)"
+        echo "  5) Office (xournal)"
+        echo "  6) Media (ubuntu-restricted-extras, digikam, ffmpeg, gimp, gscan2pdf, vlc)"
+        echo "  7) Handbrake"
+        echo "  8) Devtools (jq, make, sqlite3)"
+        echo "  9) Dropbox"
+        echo " 10) Install nvm & node"
+        echo " 11) Clojure"
+        echo " 12) Python (pyenv)"
+        echo " 13) Python (latest CPython)"
+        echo " 14) Zoom"
+        echo " 15) OBS"
+        echo " 16) Remove Firefox & Thunderbird"
+        echo " 17) Remove unattended-upgrades"
         echo ""
         echo "  b) Back"
         echo ""
@@ -1033,20 +1059,21 @@ action_install_software() {
         case "$choice" in
             1) action_checkout_bin_scripts ;;
             2) action_install_filesystem_utils ;;
-            3) action_install_system_utils ;;
-            4) action_install_office ;;
-            5) action_install_media ;;
-            6) action_install_handbrake ;;
-            7) action_install_devtools ;;
-            8) action_install_dropbox ;;
-            9) action_install_nvm_node ;;
-            10) action_install_clojure ;;
-            11) action_install_pyenv ;;
-            12) action_install_cpython_latest ;;
-            13) action_install_zoom ;;
-            14) action_install_obs ;;
-            15) action_remove_firefox_thunderbird ;;
-            16) action_remove_unattended_upgrades ;;
+            3) action_add_sudoers_mount ;;
+            4) action_install_system_utils ;;
+            5) action_install_office ;;
+            6) action_install_media ;;
+            7) action_install_handbrake ;;
+            8) action_install_devtools ;;
+            9) action_install_dropbox ;;
+            10) action_install_nvm_node ;;
+            11) action_install_clojure ;;
+            12) action_install_pyenv ;;
+            13) action_install_cpython_latest ;;
+            14) action_install_zoom ;;
+            15) action_install_obs ;;
+            16) action_remove_firefox_thunderbird ;;
+            17) action_remove_unattended_upgrades ;;
             b|B) return 0 ;;
             *) echo "Invalid selection: $choice" ;;
         esac
