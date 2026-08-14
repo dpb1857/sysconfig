@@ -1000,6 +1000,16 @@ action_install_docker() {
     echo "Docker installed. Log out and back in for group membership to take effect."
 }
 
+action_install_webodm() {
+    if [[ -d "$HOME/WebODM" ]]; then
+        echo "WebODM already checked out at $HOME/WebODM"
+        return 0
+    fi
+
+    (cd "$HOME" && git clone https://github.com/OpenDroneMap/WebODM --config core.autocrlf=input)
+    echo "WebODM checked out to $HOME/WebODM. Run ./webodm.sh start from that directory to start it."
+}
+
 action_remove_unattended_upgrades() {
     sudo apt-get remove --purge -y unattended-upgrades
     echo "unattended-upgrades removed."
@@ -1070,8 +1080,9 @@ action_install_software() {
         echo " 14) Zoom"
         echo " 15) OBS"
         echo " 16) Docker"
-        echo " 17) Remove Firefox & Thunderbird"
-        echo " 18) Remove unattended-upgrades"
+        echo " 17) WebODM"
+        echo " 18) Remove Firefox & Thunderbird"
+        echo " 19) Remove unattended-upgrades"
         echo ""
         echo "  b) Back"
         echo ""
@@ -1093,8 +1104,9 @@ action_install_software() {
             14) action_install_zoom ;;
             15) action_install_obs ;;
             16) action_install_docker ;;
-            17) action_remove_firefox_thunderbird ;;
-            18) action_remove_unattended_upgrades ;;
+            17) action_install_webodm ;;
+            18) action_remove_firefox_thunderbird ;;
+            19) action_remove_unattended_upgrades ;;
             b|B) return 0 ;;
             *) echo "Invalid selection: $choice" ;;
         esac
