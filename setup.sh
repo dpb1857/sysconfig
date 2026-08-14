@@ -981,6 +981,25 @@ action_install_obs() {
     sudo apt install -y obs-studio
 }
 
+action_install_docker() {
+    sudo apt-get update
+    sudo apt-get install -y ca-certificates curl
+    sudo install -m 0755 -d /etc/apt/keyrings
+    sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+    sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+    echo \
+        "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+        $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+        sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+    sudo apt-get update
+    sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+    sudo usermod -aG docker "$USER"
+    echo "Docker installed. Log out and back in for group membership to take effect."
+}
+
 action_remove_unattended_upgrades() {
     sudo apt-get remove --purge -y unattended-upgrades
     echo "unattended-upgrades removed."
@@ -1050,8 +1069,9 @@ action_install_software() {
         echo " 13) Python (latest CPython)"
         echo " 14) Zoom"
         echo " 15) OBS"
-        echo " 16) Remove Firefox & Thunderbird"
-        echo " 17) Remove unattended-upgrades"
+        echo " 16) Docker"
+        echo " 17) Remove Firefox & Thunderbird"
+        echo " 18) Remove unattended-upgrades"
         echo ""
         echo "  b) Back"
         echo ""
@@ -1072,8 +1092,9 @@ action_install_software() {
             13) action_install_cpython_latest ;;
             14) action_install_zoom ;;
             15) action_install_obs ;;
-            16) action_remove_firefox_thunderbird ;;
-            17) action_remove_unattended_upgrades ;;
+            16) action_install_docker ;;
+            17) action_remove_firefox_thunderbird ;;
+            18) action_remove_unattended_upgrades ;;
             b|B) return 0 ;;
             *) echo "Invalid selection: $choice" ;;
         esac
