@@ -1010,6 +1010,10 @@ action_install_webodm() {
     echo "WebODM checked out to $HOME/WebODM. Run ./webodm.sh start from that directory to start it."
 }
 
+action_install_qgis() {
+    sudo apt install -y qgis
+}
+
 action_remove_unattended_upgrades() {
     sudo apt-get remove --purge -y unattended-upgrades
     echo "unattended-upgrades removed."
@@ -1081,8 +1085,9 @@ action_install_software() {
         echo " 15) OBS"
         echo " 16) Docker"
         echo " 17) WebODM"
-        echo " 18) Remove Firefox & Thunderbird"
-        echo " 19) Remove unattended-upgrades"
+        echo " 18) QGIS"
+        echo " 19) Remove Firefox & Thunderbird"
+        echo " 20) Remove unattended-upgrades"
         echo ""
         echo "  b) Back"
         echo ""
@@ -1105,8 +1110,9 @@ action_install_software() {
             15) action_install_obs ;;
             16) action_install_docker ;;
             17) action_install_webodm ;;
-            18) action_remove_firefox_thunderbird ;;
-            19) action_remove_unattended_upgrades ;;
+            18) action_install_qgis ;;
+            19) action_remove_firefox_thunderbird ;;
+            20) action_remove_unattended_upgrades ;;
             b|B) return 0 ;;
             *) echo "Invalid selection: $choice" ;;
         esac
